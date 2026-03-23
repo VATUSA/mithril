@@ -1,5 +1,6 @@
 //! VATUSA API.
 
+use anyhow::{Context, Result};
 use axum::{Router, routing::get};
 use clap::Parser;
 use std::time::Duration;
@@ -46,13 +47,13 @@ async fn shutdown_signal() {
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     let subscriber = tracing_subscriber::FmtSubscriber::builder()
         .with_max_level(tracing::Level::DEBUG)
         .finish();
-    tracing::subscriber::set_global_default(subscriber).expect("Unable to configure logging");
+    tracing::subscriber::set_global_default(subscriber).context("Unable to configure logging")?;
 
     let home = Router::new().route("/", get(|| async { "Hello, World!" }));
     let app = Router::new().merge(home).layer(
@@ -68,9 +69,11 @@ async fn main() {
     tracing::info!("Listening on http://{host_and_port}/");
     let listener = tokio::net::TcpListener::bind(&host_and_port)
         .await
-        .expect("Could not bind the HTTP listener");
+        .context("Could not bind the HTTP listener")?;
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())
         .await
-        .expect("Could not serve the app");
+        .context("Could not serve the app")?;
+
+    Ok(())
 }
