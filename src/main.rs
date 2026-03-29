@@ -1,12 +1,20 @@
 //! VATUSA API.
 
+#![deny(clippy::all)]
+#![deny(unsafe_code)]
+
+use crate::db::{connect_cobalt, connect_vatusa};
 use anyhow::{Context, Result};
 use axum::{Router, routing::get};
 use clap::Parser;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::timeout::TimeoutLayer;
+
+mod db;
+mod routes;
+mod shared;
 
 /// VATUSA API.
 #[derive(Debug, Parser)]
@@ -49,19 +57,25 @@ async fn shutdown_signal() {
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
+    dotenv::dotenv().context("Unable to read .env file")?;
 
     let subscriber = tracing_subscriber::FmtSubscriber::builder()
         .with_max_level(tracing::Level::DEBUG)
         .finish();
     tracing::subscriber::set_global_default(subscriber).context("Unable to configure logging")?;
 
+    let app_state = Arc::new(shared::AppState {
+        vatusa_db: connect_vatusa().await.context("vatusa db")?,
+        cobalt_db: connect_cobalt().await.context("cobalt db")?,
+    });
+
     let home = Router::new().route("/", get(|| async { "Hello, World!" }));
-    let app = Router::new().merge(home).layer(
+    let app = Router::new().merge(home).with_state(app_state).layer(
         ServiceBuilder::new()
             .layer(tower_http::trace::TraceLayer::new_for_http())
             .layer(TimeoutLayer::with_status_code(
                 http::StatusCode::GATEWAY_TIMEOUT,
-                Duration::from_secs(30),
+                Duration::from_secs(60),
             )),
     );
 
