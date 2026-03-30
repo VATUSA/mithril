@@ -17,6 +17,7 @@ clap = { version = "4.6.0", features = ["derive"] }
 dotenv = "0.15.0"
 http = "1.4.0"
 serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "mysql", "macros"] }
 thiserror = "2.0.18"
 tokio = { version = "1.50.0", features = ["full"] }
@@ -24,5 +25,7 @@ toml = "1.0.7"
 tower = "0.5.3"
 tower-http = { version = "0.6.8", features = ["timeout", "trace"] }
 tower-sessions = "0.15.0"
+tower_governor = "0.8.0"
 tracing = "0.1.44"
 tracing-subscriber = "0.3.23"
+utoipa = "5.4.0"

@@ -5,7 +5,7 @@
 
 use crate::db::{connect_cobalt, connect_vatusa};
 use anyhow::{Context, Result};
-use axum::{Router, routing::get};
+use axum::{Json, Router, routing::get};
 use clap::Parser;
 use std::{sync::Arc, time::Duration};
 use tokio::signal;
@@ -69,15 +69,22 @@ async fn main() -> Result<()> {
         cobalt_db: connect_cobalt().await.context("cobalt db")?,
     });
 
-    let home = Router::new().route("/", get(|| async { "Hello, World!" }));
-    let app = Router::new().merge(home).with_state(app_state).layer(
-        ServiceBuilder::new()
-            .layer(tower_http::trace::TraceLayer::new_for_http())
-            .layer(TimeoutLayer::with_status_code(
-                http::StatusCode::GATEWAY_TIMEOUT,
-                Duration::from_secs(60),
-            )),
-    );
+    let app = Router::new()
+        .route(
+            "/",
+            get(|| async { Json(serde_json::json!({"message": "API root"})) }),
+        )
+        .nest("/news", routes::news::router())
+        .nest("/events", routes::events::router())
+        .with_state(app_state)
+        .layer(
+            ServiceBuilder::new()
+                .layer(tower_http::trace::TraceLayer::new_for_http())
+                .layer(TimeoutLayer::with_status_code(
+                    http::StatusCode::GATEWAY_TIMEOUT,
+                    Duration::from_secs(60),
+                )),
+        );
 
     let host_and_port = format!("{}:{}", cli.host, cli.port);
     tracing::info!("Listening on http://{host_and_port}/");
