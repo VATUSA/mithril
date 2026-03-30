@@ -5,12 +5,15 @@
 
 use crate::db::{connect_cobalt, connect_vatusa};
 use anyhow::{Context, Result};
-use axum::{Json, Router, routing::get};
+use axum::Json;
 use clap::Parser;
 use std::{sync::Arc, time::Duration};
 use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::timeout::TimeoutLayer;
+use utoipa::OpenApi;
+use utoipa_axum::{router::OpenApiRouter, routes};
+use utoipa_redoc::{Redoc, Servable};
 
 mod db;
 mod routes;
@@ -54,6 +57,33 @@ async fn shutdown_signal() {
     }
 }
 
+#[derive(OpenApi)]
+struct ApiDoc;
+
+/// Get health of the API.
+#[utoipa::path(
+    method(get, head),
+    path = "/health",
+    responses(
+        (status = OK, description = "Success", body = str, content_type = "text/plain")
+    )
+)]
+async fn health() -> &'static str {
+    "ok"
+}
+
+/// Return JSON version of an OpenAPI schema
+#[utoipa::path(
+    get,
+    path = "/swagger.json",
+    responses(
+        (status = 200, description = "JSON file", body = str, content_type = "application/json")
+    )
+)]
+async fn openapi() -> Json<utoipa::openapi::OpenApi> {
+    Json(ApiDoc::openapi())
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
@@ -69,22 +99,22 @@ async fn main() -> Result<()> {
         cobalt_db: connect_cobalt().await.context("cobalt db")?,
     });
 
-    let app = Router::new()
-        .route(
-            "/",
-            get(|| async { Json(serde_json::json!({"message": "API root"})) }),
-        )
-        .nest("/news", routes::news::router())
-        .nest("/events", routes::events::router())
-        .with_state(app_state)
-        .layer(
-            ServiceBuilder::new()
-                .layer(tower_http::trace::TraceLayer::new_for_http())
-                .layer(TimeoutLayer::with_status_code(
-                    http::StatusCode::GATEWAY_TIMEOUT,
-                    Duration::from_secs(60),
-                )),
-        );
+    let (app, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+        .with_state(app_state.clone())
+        .routes(routes!(health))
+        .routes(routes!(openapi))
+        .nest("/news", routes::news::router(app_state.clone()))
+        .nest("/events", routes::events::router(app_state.clone()))
+        .split_for_parts();
+
+    let app = app.merge(Redoc::with_url("/", api)).layer(
+        ServiceBuilder::new()
+            .layer(tower_http::trace::TraceLayer::new_for_http())
+            .layer(TimeoutLayer::with_status_code(
+                http::StatusCode::GATEWAY_TIMEOUT,
+                Duration::from_secs(60),
+            )),
+    );
 
     let host_and_port = format!("{}:{}", cli.host, cli.port);
     tracing::info!("Listening on http://{host_and_port}/");

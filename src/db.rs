@@ -9,6 +9,7 @@ use crate::shared::AppError;
 use serde::Serialize;
 use sqlx::MySqlPool;
 use std::env;
+use utoipa::ToSchema;
 
 /// Get a connection pool to the `vatusa-old` database.
 ///
@@ -26,7 +27,7 @@ pub async fn connect_cobalt() -> Result<MySqlPool, AppError> {
     Ok(pool)
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct NewsPost {
     pub id: i32,
     pub title: String,
@@ -44,7 +45,7 @@ pub async fn get_news(db: &MySqlPool) -> Result<Vec<NewsPost>, AppError> {
     Ok(news)
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct Event {
     pub id: i64,
     pub title: String,
