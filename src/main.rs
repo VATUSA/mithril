@@ -16,6 +16,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_redoc::{Redoc, Servable};
 
 mod db;
+mod queries;
 mod routes;
 mod shared;
 

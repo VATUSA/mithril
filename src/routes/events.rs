@@ -1,7 +1,8 @@
 //! Events routes.
 
 use crate::{
-    db::{self, Event},
+    db::Event,
+    queries,
     shared::{AppError, AppState},
 };
 use axum::{Json, extract::State};
@@ -24,6 +25,6 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     )
 )]
 async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event>>, AppError> {
-    let events = db::get_events(&state.cobalt_db).await?;
+    let events = queries::get_events(&state.cobalt_db).await?;
     Ok(Json(events))
 }

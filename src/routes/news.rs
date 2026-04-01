@@ -1,7 +1,8 @@
 //! News routes.
 
 use crate::{
-    db::{self, NewsPost},
+    db::NewsPost,
+    queries,
     shared::{AppError, AppState},
 };
 use axum::{Json, extract::State};
@@ -24,6 +25,6 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     )
 )]
 async fn get_news(State(state): State<Arc<AppState>>) -> Result<Json<Vec<NewsPost>>, AppError> {
-    let news = db::get_news(&state.cobalt_db).await?;
+    let news = queries::get_news(&state.cobalt_db).await?;
     Ok(Json(news))
 }

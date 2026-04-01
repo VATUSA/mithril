@@ -32,6 +32,6 @@ impl IntoResponse for AppError {
     /// Generate an Axum-compatible response from an error.
     fn into_response(self) -> Response {
         // TODO improve
-        (StatusCode::INTERNAL_SERVER_ERROR, "TODO").into_response()
+        (StatusCode::INTERNAL_SERVER_ERROR, "Error").into_response()
     }
 }
