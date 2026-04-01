@@ -2,7 +2,7 @@
 //!
 //! Unlike many applications, this program is connecting to a database
 //! that already exists and is already populated with data. Because of
-//! that, you won't find things here like migrations or CREATE TABLE
+//! that, you won't find things here like migrations or `CREATE TABLE`
 //! statements.
 //!
 //! This module contains the DB connection functions and DB models.

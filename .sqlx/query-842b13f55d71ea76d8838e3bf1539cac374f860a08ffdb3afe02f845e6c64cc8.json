@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE news_post SET title=?, body=?, edit_time=? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "842b13f55d71ea76d8838e3bf1539cac374f860a08ffdb3afe02f845e6c64cc8"
+}

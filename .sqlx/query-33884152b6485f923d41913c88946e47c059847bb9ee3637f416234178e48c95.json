@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE event SET title=?, body=?, banner_image_url=?, facility=?,\n        start_time=?, end_time=?, updated_at=?, updated_by=? WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 9
+    },
+    "nullable": []
+  },
+  "hash": "33884152b6485f923d41913c88946e47c059847bb9ee3637f416234178e48c95"
+}
