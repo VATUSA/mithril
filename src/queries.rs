@@ -155,7 +155,7 @@ pub async fn update_event(db: &MySqlPool, data: &UpdateEvent) -> Result<(), AppE
     Ok(())
 }
 
-/// Delete a `event` row.
+/// Delete an `event` row.
 pub async fn delete_event(db: &MySqlPool, id: u64) -> Result<(), AppError> {
     sqlx::query!("DELETE FROM event WHERE id = ?", id)
         .execute(db)
