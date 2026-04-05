@@ -35,3 +35,15 @@ impl IntoResponse for AppError {
         (StatusCode::INTERNAL_SERVER_ERROR, "Error").into_response()
     }
 }
+
+/// Authentication variants for incoming requests.
+#[derive(Debug, Clone)]
+pub enum Auth {
+    /// No header, or not matching DB API key.
+    Anonymous,
+    /// A valid authenticated request
+    Key {
+        /// Which facility, if any, the key allows for additional permissions.
+        facility: Option<String>,
+    },
+}

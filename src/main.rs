@@ -3,7 +3,10 @@
 #![deny(clippy::all)]
 #![deny(unsafe_code)]
 
-use crate::db::{connect_cobalt, connect_vatusa};
+use crate::{
+    db::{connect_cobalt, connect_vatusa},
+    middleware::auth_middleware,
+};
 use anyhow::{Context, Result};
 use axum::Json;
 use clap::Parser;
@@ -16,6 +19,7 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_redoc::{Redoc, Servable};
 
 mod db;
+mod middleware;
 mod queries;
 mod routes;
 mod shared;
@@ -114,6 +118,10 @@ async fn main() -> Result<()> {
             .layer(TimeoutLayer::with_status_code(
                 http::StatusCode::GATEWAY_TIMEOUT,
                 Duration::from_secs(60),
+            ))
+            .layer(axum::middleware::from_fn_with_state(
+                app_state.clone(),
+                auth_middleware,
             )),
     );
 

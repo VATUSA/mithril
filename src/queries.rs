@@ -4,12 +4,24 @@
 //! proper authentication and authorization has already occurred.
 
 use crate::{
-    db::{Event, NewsPost},
+    db::{ApiKey, Event, NewsPost},
     shared::AppError,
 };
 use chrono::Utc;
 use serde::Deserialize;
 use sqlx::MySqlPool;
+
+// ---------------------------------------------------
+// v3_api_key
+// ---------------------------------------------------
+
+/// Get an API key from the DB by its code.
+pub async fn get_api_key(db: &MySqlPool, code: &str) -> Result<Option<ApiKey>, AppError> {
+    let api_key = sqlx::query_as!(ApiKey, "SELECT * FROM v3_api_key WHERE code = ?", code)
+        .fetch_optional(db)
+        .await?;
+    Ok(api_key)
+}
 
 // ---------------------------------------------------
 // news_post

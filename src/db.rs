@@ -33,6 +33,16 @@ pub async fn connect_cobalt() -> Result<MySqlPool, AppError> {
 }
 
 #[derive(Debug, Serialize, ToSchema)]
+pub struct ApiKey {
+    pub id: i64,
+    pub code: String,
+    pub facility: Option<String>,
+    pub notes: Option<String>,
+    pub created_at: i64,
+    pub updated_at: Option<i64>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
 pub struct NewsPost {
     pub id: i32,
     pub title: String,
