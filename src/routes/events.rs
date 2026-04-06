@@ -19,7 +19,7 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
 /// Retrieve events.
 #[utoipa::path(
     get,
-    path = "/events/",
+    path = "/",
     responses(
         (status = 200, description = "Events", body = [Event])
     )
@@ -29,6 +29,10 @@ async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event
     Ok(Json(events))
 }
 
+async fn get_event() {}
+
 async fn create_event() {}
 
 async fn edit_event() {}
+
+async fn delete_event() {}

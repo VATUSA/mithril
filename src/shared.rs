@@ -20,6 +20,10 @@ pub struct AppState {
 pub enum AppError {
     #[error(transparent)]
     Database(#[from] sqlx::Error),
+    #[error("API key required")]
+    ApiKeyRequired,
+    #[error("Insufficient permissions")]
+    InsufficientPermissions,
     #[error(transparent)]
     JsonProcessingError(#[from] serde_json::Error),
     #[error(transparent)]
