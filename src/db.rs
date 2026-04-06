@@ -36,6 +36,7 @@ pub async fn connect_cobalt() -> Result<MySqlPool, AppError> {
 pub struct ApiKey {
     pub id: i64,
     pub code: String,
+    pub testing: bool,
     pub facility: Option<String>,
     pub notes: Option<String>,
     pub created_at: i64,

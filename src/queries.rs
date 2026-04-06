@@ -17,7 +17,8 @@ use sqlx::MySqlPool;
 
 /// Get an API key from the DB by its code.
 pub async fn get_api_key(db: &MySqlPool, code: &str) -> Result<Option<ApiKey>, AppError> {
-    let api_key = sqlx::query_as!(ApiKey, "SELECT * FROM v3_api_key WHERE code = ?", code)
+    // I hate MySQL
+    let api_key = sqlx::query_as!(ApiKey, r#"SELECT id, code, testing as "testing: bool", facility, notes, created_at, updated_at FROM v3_api_key WHERE code = ?"#, code)
         .fetch_optional(db)
         .await?;
     Ok(api_key)

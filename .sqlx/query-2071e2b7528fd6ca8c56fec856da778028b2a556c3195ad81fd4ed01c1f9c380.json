@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT * FROM v3_api_key WHERE code = ?",
+  "query": "SELECT id, code, testing as \"testing: bool\", facility, notes, created_at, updated_at FROM v3_api_key WHERE code = ?",
   "describe": {
     "columns": [
       {
@@ -23,6 +23,15 @@
       },
       {
         "ordinal": 2,
+        "name": "testing: bool",
+        "type_info": {
+          "type": "Tiny",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "max_size": 1
+        }
+      },
+      {
+        "ordinal": 3,
         "name": "facility",
         "type_info": {
           "type": "Blob",
@@ -31,7 +40,7 @@
         }
       },
       {
-        "ordinal": 3,
+        "ordinal": 4,
         "name": "notes",
         "type_info": {
           "type": "Blob",
@@ -40,7 +49,7 @@
         }
       },
       {
-        "ordinal": 4,
+        "ordinal": 5,
         "name": "created_at",
         "type_info": {
           "type": "LongLong",
@@ -49,7 +58,7 @@
         }
       },
       {
-        "ordinal": 5,
+        "ordinal": 6,
         "name": "updated_at",
         "type_info": {
           "type": "LongLong",
@@ -64,11 +73,12 @@
     "nullable": [
       false,
       false,
+      false,
       true,
       true,
       false,
       true
     ]
   },
-  "hash": "f6e5eeee47dac19844eee13555acc785e32aef9ff50dc111f282385e56222a13"
+  "hash": "2071e2b7528fd6ca8c56fec856da778028b2a556c3195ad81fd4ed01c1f9c380"
 }
