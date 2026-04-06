@@ -24,6 +24,7 @@ pub async fn auth_middleware(
         match crate::queries::get_api_key(&state.vatusa_db, as_str).await {
             Ok(Some(api_key)) => Auth::Key {
                 facility: api_key.facility,
+                testing: api_key.testing,
             },
             Ok(None) => {
                 tracing::info!("Auth header '{as_str}' not found");

@@ -28,3 +28,5 @@ async fn get_news(State(state): State<Arc<AppState>>) -> Result<Json<Vec<NewsPos
     let news = queries::get_news_post(&state.cobalt_db).await?;
     Ok(Json(news))
 }
+
+async fn delete_news() {}

@@ -28,3 +28,7 @@ async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event
     let events = queries::get_events(&state.cobalt_db).await?;
     Ok(Json(events))
 }
+
+async fn create_event() {}
+
+async fn edit_event() {}

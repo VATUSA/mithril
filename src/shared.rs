@@ -45,5 +45,6 @@ pub enum Auth {
     Key {
         /// Which facility, if any, the key allows for additional permissions.
         facility: Option<String>,
+        testing: bool,
     },
 }
