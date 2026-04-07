@@ -5,8 +5,8 @@ edition = "2024"
 authors = []
 description = "VATUSA HTTP API"
 readme = "README.md"
-homepage = "https://github.com/vatusa/mithril`"
-repository = "https://github.com/vatusa/mithril`"
+homepage = "https://github.com/vatusa/mithril"
+repository = "https://github.com/vatusa/mithril"
 documentation = ""
 license-file = "LICENSE.md"
 

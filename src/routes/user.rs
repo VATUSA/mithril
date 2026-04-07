@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 async fn get_info() {}
 
 async fn get_rating_history() {}

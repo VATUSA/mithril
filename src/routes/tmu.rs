@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 async fn get_planes() {}
 
 async fn get_tmu_notices() {}

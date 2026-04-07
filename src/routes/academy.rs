@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 async fn get_course_ids() {}
 
 async fn enroll_controller_in_course() {}

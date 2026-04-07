@@ -92,7 +92,7 @@ async fn openapi() -> Json<utoipa::openapi::OpenApi> {
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
-    dotenv::dotenv().context("Unable to read .env file")?;
+    let _ = dotenv::dotenv();
 
     let subscriber = tracing_subscriber::FmtSubscriber::builder()
         .with_max_level(tracing::Level::DEBUG)
@@ -110,6 +110,7 @@ async fn main() -> Result<()> {
         .routes(routes!(openapi))
         .nest("/news", routes::news::router(app_state.clone()))
         .nest("/events", routes::events::router(app_state.clone()))
+        .fallback(routes::fallback)
         .split_for_parts();
 
     let app = app.merge(Redoc::with_url("/", api)).layer(

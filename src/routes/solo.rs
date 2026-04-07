@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 async fn get_solo_certs() {}
 
 async fn create_solo_cert() {}

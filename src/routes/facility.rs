@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 async fn get_facilities() {}
 
 async fn get_facility_info() {}

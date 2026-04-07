@@ -74,8 +74,8 @@ pub async fn update_news_post(db: &MySqlPool, data: &UpdateNewsPost) -> Result<(
         "UPDATE news_post SET title=?, body=?, edit_time=? WHERE id = ?",
         data.title,
         data.body,
+        Utc::now().timestamp_millis(),
         data.id,
-        Utc::now().timestamp_millis()
     )
     .execute(db)
     .await?;
@@ -159,8 +159,8 @@ pub async fn update_event(db: &MySqlPool, data: &UpdateEvent) -> Result<(), AppE
         data.facility,
         data.start_time,
         data.end_time,
-        data.updated_by,
         Utc::now().timestamp_millis(),
+        data.updated_by,
         data.id,
     )
     .execute(db)

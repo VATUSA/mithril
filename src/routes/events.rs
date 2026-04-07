@@ -1,5 +1,7 @@
 //! Events routes.
 
+#![allow(dead_code)]
+
 use crate::{
     db::Event,
     queries,
