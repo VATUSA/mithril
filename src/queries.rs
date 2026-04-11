@@ -29,9 +29,17 @@ pub async fn get_api_key(db: &MySqlPool, code: &str) -> Result<Option<ApiKey>, A
 // ---------------------------------------------------
 
 /// Get all `news_post` rows.
-pub async fn get_news_post(db: &MySqlPool) -> Result<Vec<NewsPost>, AppError> {
+pub async fn get_news_posts(db: &MySqlPool) -> Result<Vec<NewsPost>, AppError> {
     let news = sqlx::query_as!(NewsPost, "SELECT * FROM news_post")
         .fetch_all(db)
+        .await?;
+    Ok(news)
+}
+
+/// Get a single `news_post` row.
+pub async fn get_news_post(db: &MySqlPool, id: i32) -> Result<Option<NewsPost>, AppError> {
+    let news = sqlx::query_as!(NewsPost, "SELECT * FROM news_post WHERE id = ? LIMIT 1", id)
+        .fetch_optional(db)
         .await?;
     Ok(news)
 }
@@ -98,6 +106,14 @@ pub async fn delete_news_post(db: &MySqlPool, id: u64) -> Result<(), AppError> {
 pub async fn get_events(db: &MySqlPool) -> Result<Vec<Event>, AppError> {
     let events = sqlx::query_as!(Event, "SELECT * FROM event")
         .fetch_all(db)
+        .await?;
+    Ok(events)
+}
+
+/// Get a single `event` row.
+pub async fn get_event(db: &MySqlPool, id: i32) -> Result<Option<Event>, AppError> {
+    let events = sqlx::query_as!(Event, "SELECT * FROM event WHERE id = ? LIMIT 1", id)
+        .fetch_optional(db)
         .await?;
     Ok(events)
 }

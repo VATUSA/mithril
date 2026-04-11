@@ -1,20 +1,21 @@
 //! Events routes.
 
-#![allow(dead_code)]
-
 use crate::{
     db::Event,
     queries,
     shared::{AppError, AppState},
 };
-use axum::{Json, extract::State};
+use axum::{
+    Json,
+    extract::{Path, State},
+};
 use std::sync::Arc;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 /// Register routes.
 pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     OpenApiRouter::new()
-        .routes(routes!(get_events))
+        .routes(routes!(get_events, get_event))
         .with_state(state)
 }
 
@@ -31,7 +32,20 @@ async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event
     Ok(Json(events))
 }
 
-async fn get_event() {}
+#[utoipa::path(
+    get,
+    path = "/{id}",
+    responses(
+        (status = 200, description = "Event", body = Event)
+    )
+)]
+async fn get_event(
+    Path(id): Path<i32>,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Option<Event>>, AppError> {
+    let event = queries::get_event(&state.cobalt_db, id).await?;
+    Ok(Json(event))
+}
 
 async fn create_event() {}
 
