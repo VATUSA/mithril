@@ -15,7 +15,8 @@ use utoipa_axum::{router::OpenApiRouter, routes};
 /// Register routes.
 pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     OpenApiRouter::new()
-        .routes(routes!(get_events, get_event))
+        .routes(routes!(get_events))
+        .routes(routes!(get_event))
         .with_state(state)
 }
 
@@ -36,15 +37,19 @@ async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event
     get,
     path = "/{id}",
     responses(
-        (status = 200, description = "Event", body = Event)
+        (status = 200, description = "Event", body = Event),
+        (status = 404, description = "No matching event found")
     )
 )]
 async fn get_event(
     Path(id): Path<i32>,
     State(state): State<Arc<AppState>>,
-) -> Result<Json<Option<Event>>, AppError> {
+) -> Result<Json<Event>, AppError> {
     let event = queries::get_event(&state.cobalt_db, id).await?;
-    Ok(Json(event))
+    match event {
+        Some(e) => Ok(Json(e)),
+        None => Err(AppError::NotFound("No event with given id found")),
+    }
 }
 
 async fn create_event() {}
