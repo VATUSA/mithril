@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO news_post (title, body, author_cid, post_time) VALUES (?, ?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "081f979e364c04b48486817f65b1aae1c9925d8396cc968cf9c4693f6906f61c"
+}

@@ -20,10 +20,11 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
         .with_state(state)
 }
 
-/// Retrieve events.
+/// Retrieve events
 #[utoipa::path(
     get,
     path = "/",
+    tag = "events",
     responses(
         (status = 200, description = "Events", body = [Event])
     )
@@ -33,9 +34,11 @@ async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event
     Ok(Json(events))
 }
 
+/// Retrieve a single event
 #[utoipa::path(
     get,
     path = "/{id}",
+    tag = "events",
     responses(
         (status = 200, description = "Event", body = Event),
         (status = 404, description = "No matching event found")

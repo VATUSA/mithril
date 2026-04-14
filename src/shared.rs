@@ -123,6 +123,7 @@ pub enum Auth {
     Anonymous,
     /// A valid authenticated request
     Key {
+        key_id: i64,
         /// Which facility, if any, the key allows for additional permissions.
         facility: Option<String>,
         testing: bool,

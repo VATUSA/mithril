@@ -31,6 +31,7 @@ pub async fn auth_middleware(
 
             match api_key {
                 Some(api_key) => Auth::Key {
+                    key_id: api_key.id,
                     facility: api_key.facility,
                     testing: api_key.testing,
                 },
@@ -71,17 +72,10 @@ pub async fn auth_middleware(
 ///     AuthExtractor(auth): AuthExtractor,
 ///     State(state): State<Arc<AppState>>,
 /// ) -> Result<Json<Vec<NewsPost>>, AppError> {
-///     match auth {
-///         Auth::Anonymous => {}
-///         Auth::Key { facility, testing } => {
-///             let _ = (facility, testing);
-///         }
-///     }
-///
-///     let news = crate::queries::get_news_posts(&state.cobalt_db).await?;
-///     Ok(Json(news))
+///     todo!()
 /// }
 /// ```
+#[allow(unused)]
 pub struct AuthExtractor(pub Auth);
 
 impl<S> FromRequestParts<S> for AuthExtractor
@@ -124,13 +118,11 @@ where
 ///     auth: RequireAuth,
 ///     State(state): State<Arc<AppState>>,
 /// ) -> Result<Json<serde_json::Value>, AppError> {
-///     let _ = (&auth.facility, auth.testing);
-///     let _ = &state.cobalt_db;
-///
-///     Ok(Json(json!({ "ok": true })))
+///    todo!()
 /// }
 /// ```
 pub struct RequireAuth {
+    pub key_id: i64,
     pub facility: Option<String>,
     pub testing: bool,
 }
@@ -152,7 +144,15 @@ where
             .unwrap_or(Auth::Anonymous)
         {
             Auth::Anonymous => Err(AppError::ApiKeyRequired),
-            Auth::Key { facility, testing } => Ok(Self { facility, testing }),
+            Auth::Key {
+                key_id,
+                facility,
+                testing,
+            } => Ok(Self {
+                key_id,
+                facility,
+                testing,
+            }),
         }
     }
 }

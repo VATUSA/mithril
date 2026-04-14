@@ -21,9 +21,14 @@ use utoipa::ToSchema;
 /// Get an API key from the DB by its code.
 pub async fn get_api_key(db: &MySqlPool, code: &str) -> Result<Option<ApiKey>, AppError> {
     // I hate MySQL
-    let api_key = sqlx::query_as!(ApiKey, r#"SELECT id, code, testing as "testing: bool", facility, notes, created_at, updated_at FROM v3_api_key WHERE code = ?"#, code)
-        .fetch_optional(db)
-        .await?;
+    let api_key = sqlx::query_as!(
+        ApiKey,
+        r#"SELECT id, code, testing as "testing: bool", facility, notes,
+created_at, updated_at FROM v3_api_key WHERE code = ?"#,
+        code
+    )
+    .fetch_optional(db)
+    .await?;
     Ok(api_key)
 }
 
@@ -51,40 +56,42 @@ pub async fn get_news_post(db: &MySqlPool, id: i32) -> Result<Option<NewsPost>, 
 pub struct CreateNewsPost {
     pub title: String,
     pub body: String,
+    pub author_cid: i32,
 }
 
 /// Create a new `news_post` row.
 pub async fn create_news_post(db: &MySqlPool, data: &CreateNewsPost) -> Result<u64, AppError> {
-    // let id = sqlx::query!(
-    //     "INSERT INTO news_post (title, body, author_cid, post_time, edit_time) VALUES (?, ?, ?, ?, ?)",
-    //     data.title,
-    //     data.body,
-    //     data.author_cid,
-    //     data.post_time,
-    //     data.edit_time,
-    // )
-    // .execute(db)
-    // .await?
-    // .last_insert_id();
-    // Ok(id)
-    todo!()
+    let id = sqlx::query!(
+        "INSERT INTO news_post (title, body, author_cid, post_time) VALUES (?, ?, ?, ?)",
+        data.title,
+        data.body,
+        data.author_cid,
+        Utc::now().timestamp_millis()
+    )
+    .execute(db)
+    .await?
+    .last_insert_id();
+    Ok(id)
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateNewsPost {
-    pub id: i32,
     pub title: String,
     pub body: String,
 }
 
 /// Update a `news_post` row.
-pub async fn update_news_post(db: &MySqlPool, data: &UpdateNewsPost) -> Result<(), AppError> {
+pub async fn update_news_post(
+    db: &MySqlPool,
+    id: i32,
+    data: &UpdateNewsPost,
+) -> Result<(), AppError> {
     sqlx::query!(
         "UPDATE news_post SET title=?, body=?, edit_time=? WHERE id = ?",
         data.title,
         data.body,
         Utc::now().timestamp_millis(),
-        data.id,
+        id,
     )
     .execute(db)
     .await?;
@@ -92,7 +99,7 @@ pub async fn update_news_post(db: &MySqlPool, data: &UpdateNewsPost) -> Result<(
 }
 
 /// Delete a `news_post` row.
-pub async fn delete_news_post(db: &MySqlPool, id: u64) -> Result<(), AppError> {
+pub async fn delete_news_post(db: &MySqlPool, id: i32) -> Result<(), AppError> {
     sqlx::query!("DELETE FROM news_post WHERE id = ?", id)
         .execute(db)
         .await?;

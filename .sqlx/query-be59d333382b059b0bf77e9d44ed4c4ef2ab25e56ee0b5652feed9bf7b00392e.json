@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT id, code, testing as \"testing: bool\", facility, notes, created_at, updated_at FROM v3_api_key WHERE code = ?",
+  "query": "SELECT id, code, testing as \"testing: bool\", facility, notes,\ncreated_at, updated_at FROM v3_api_key WHERE code = ?",
   "describe": {
     "columns": [
       {
@@ -34,9 +34,9 @@
         "ordinal": 3,
         "name": "facility",
         "type_info": {
-          "type": "Blob",
-          "flags": "BLOB",
-          "max_size": 262140
+          "type": "VarString",
+          "flags": "",
+          "max_size": 12
         }
       },
       {
@@ -80,5 +80,5 @@
       true
     ]
   },
-  "hash": "2071e2b7528fd6ca8c56fec856da778028b2a556c3195ad81fd4ed01c1f9c380"
+  "hash": "be59d333382b059b0bf77e9d44ed4c4ef2ab25e56ee0b5652feed9bf7b00392e"
 }

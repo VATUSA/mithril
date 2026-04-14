@@ -34,6 +34,9 @@ Authorization with an API key, facility or otherwise, is done via the `X-API-Key
 header in the request. If this header is supplied, it **must be correct**; supplying
 an API key that is invalid will result in an error response. Some public methods
 will return additional data when an API key is included in the request.
+
+This documentation is generated directly from the code and should always be up
+to date.
 "#;
 
 /// VATUSA API.
@@ -82,10 +85,11 @@ async fn shutdown_signal() {
 ))]
 struct ApiDoc;
 
-/// Get health of the API.
+/// Healthcheck endpoint
 #[utoipa::path(
     method(get, head),
     path = "/health",
+    tag = "meta",
     responses(
         (status = OK, description = "Success", body = str, content_type = "text/plain")
     )
@@ -98,6 +102,7 @@ async fn health() -> &'static str {
 #[utoipa::path(
     get,
     path = "/swagger.json",
+    tag = "meta",
     responses(
         (status = 200, description = "JSON file", body = str, content_type = "application/json")
     )
