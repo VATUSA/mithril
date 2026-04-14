@@ -119,7 +119,7 @@ impl IntoResponse for AppError {
 /// Authentication variants for incoming requests.
 #[derive(Debug, Clone)]
 pub enum Auth {
-    /// No header, or not matching DB API key.
+    /// No API key was supplied.
     Anonymous,
     /// A valid authenticated request
     Key {

@@ -1,59 +1,94 @@
-use crate::shared::{AppState, Auth};
+use crate::shared::{AppError, AppState, Auth};
 use axum::{
     extract::{FromRequestParts, Request, State},
     middleware::Next,
     response::Response,
 };
-use std::{convert::Infallible, sync::Arc};
+use http::header::HeaderName;
+use std::sync::Arc;
 
-/// Axum middleware to extract headers for presence of valid API key.
+const X_API_KEY: HeaderName = HeaderName::from_static("x-api-key");
+
+/// Axum middleware to resolve the optional `X-API-Key` header.
 pub async fn auth_middleware(
     State(state): State<Arc<AppState>>,
     mut request: Request,
     next: Next,
-) -> Response {
-    // attempt to match the auth header to a valid API key from the DB
-    let auth = if let Some(header) = request.headers().get("authorization") {
-        let as_str = match header.to_str() {
-            Ok(s) => s,
-            Err(e) => {
-                tracing::warn!("Auth header value could not be used as str: {e}");
-                return next.run(request).await;
-            }
-        };
-        match crate::queries::get_api_key(&state.vatusa_db, as_str).await {
-            Ok(Some(api_key)) => Auth::Key {
-                facility: api_key.facility,
-                testing: api_key.testing,
-            },
-            Ok(None) => {
-                tracing::info!("Auth header '{as_str}' not found");
-                Auth::Anonymous
-            }
-            Err(e) => {
-                tracing::error!("Error accessing DB to check auth header: {e}");
-                return next.run(request).await;
+) -> Result<Response, AppError> {
+    // attempt to resolve the API key if provided
+    let auth = match request.headers().get(&X_API_KEY) {
+        None => Auth::Anonymous,
+        Some(header) => {
+            // If a header is provided, it must be valid. Invalid headers
+            // will result in an error, even if the endpoint does not
+            // require any authorization. This is to enforce good API
+            // client behavior.
+            let key = header
+                .to_str()
+                .map_err(|_| AppError::BadRequest("invalid X-API-Key header"))?;
+
+            let api_key = crate::queries::get_api_key(&state.vatusa_db, key).await?;
+
+            match api_key {
+                Some(api_key) => Auth::Key {
+                    facility: api_key.facility,
+                    testing: api_key.testing,
+                },
+                None => return Err(AppError::BadRequest("invalid X-API-Key header")),
             }
         }
-    } else {
-        Auth::Anonymous
     };
 
     // insert into the request
     request.extensions_mut().insert(auth);
 
     // continue in the call chain
-    next.run(request).await
+    Ok(next.run(request).await)
 }
 
-/// Get the API key authentication from the request;
+/// Get the request's authentication context.
+///
+/// This extractor is suitable for endpoints that may be called
+/// anonymously but still want to inspect whether a valid API key
+/// was supplied, like for controling beahvior of returned data.
+///
+/// This does not need to be included if no key-specific behavior
+/// needs to be implemented on a route; the base-level
+/// authentication checks already happen in the middleware.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use crate::{
+///     db::NewsPost,
+///     middleware::AuthExtractor,
+///     shared::{AppError, AppState, Auth},
+/// };
+/// use axum::{Json, extract::State};
+/// use std::sync::Arc;
+///
+/// async fn get_news(
+///     AuthExtractor(auth): AuthExtractor,
+///     State(state): State<Arc<AppState>>,
+/// ) -> Result<Json<Vec<NewsPost>>, AppError> {
+///     match auth {
+///         Auth::Anonymous => {}
+///         Auth::Key { facility, testing } => {
+///             let _ = (facility, testing);
+///         }
+///     }
+///
+///     let news = crate::queries::get_news_posts(&state.cobalt_db).await?;
+///     Ok(Json(news))
+/// }
+/// ```
 pub struct AuthExtractor(pub Auth);
 
 impl<S> FromRequestParts<S> for AuthExtractor
 where
     S: Send + Sync,
 {
-    type Rejection = Infallible;
+    type Rejection = AppError;
 
     async fn from_request_parts(
         parts: &mut http::request::Parts,
@@ -65,5 +100,59 @@ where
             .cloned()
             .unwrap_or(Auth::Anonymous);
         Ok(AuthExtractor(auth))
+    }
+}
+
+/// Require a valid API key for protected routes.
+///
+/// This extractor rejects anonymous requests before the handler runs,
+/// making it appropriate for endpoints that must always be called
+/// with a valid `X-API-Key` header.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use crate::{
+///     middleware::RequireAuth,
+///     shared::{AppError, AppState},
+/// };
+/// use axum::{Json, extract::State};
+/// use serde_json::json;
+/// use std::sync::Arc;
+///
+/// async fn create_event(
+///     auth: RequireAuth,
+///     State(state): State<Arc<AppState>>,
+/// ) -> Result<Json<serde_json::Value>, AppError> {
+///     let _ = (&auth.facility, auth.testing);
+///     let _ = &state.cobalt_db;
+///
+///     Ok(Json(json!({ "ok": true })))
+/// }
+/// ```
+pub struct RequireAuth {
+    pub facility: Option<String>,
+    pub testing: bool,
+}
+
+impl<S> FromRequestParts<S> for RequireAuth
+where
+    S: Send + Sync,
+{
+    type Rejection = AppError;
+
+    async fn from_request_parts(
+        parts: &mut http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        match parts
+            .extensions
+            .get::<Auth>()
+            .cloned()
+            .unwrap_or(Auth::Anonymous)
+        {
+            Auth::Anonymous => Err(AppError::ApiKeyRequired),
+            Auth::Key { facility, testing } => Ok(Self { facility, testing }),
+        }
     }
 }
