@@ -3,7 +3,8 @@
 //! Unlike many applications, this program is connecting to a database
 //! that already exists and is already populated with data. Because of
 //! that, you won't find things here like migrations or `CREATE TABLE`
-//! statements.
+//! statements. Incremental migrations will be driven by Cobalt, then
+//! used in the frontend and in this API.
 //!
 //! This module contains the DB connection functions and DB models.
 
@@ -32,6 +33,11 @@ pub async fn connect_cobalt() -> Result<MySqlPool, AppError> {
     Ok(pool)
 }
 
+/// The v3 API keys for this application.
+///
+/// Net-new to the database.
+///
+/// **Table**: `v3_api_key`
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ApiKey {
     pub id: i64,
@@ -43,6 +49,9 @@ pub struct ApiKey {
     pub updated_at: Option<i64>,
 }
 
+/// News posts, Cobalt DB.
+///
+/// **Table**: `news_post`
 #[derive(Debug, Serialize, ToSchema)]
 pub struct NewsPost {
     pub id: i32,
@@ -53,6 +62,9 @@ pub struct NewsPost {
     pub edit_time: i64,
 }
 
+/// Event posting, Cobalt DB.
+///
+/// **Table**: `event`
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Event {
     pub id: i64,

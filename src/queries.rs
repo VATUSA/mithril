@@ -1,7 +1,9 @@
 //! Database operations.
 //!
-//! This module contains CRUD queries. All functions assume
-//! proper authentication and authorization has already occurred.
+//! This module contains CRUD queries. All functions assume proper
+//! authentication and authorization has already occurred.
+
+#![allow(unused)]
 
 use crate::{
     db::{ApiKey, Event, NewsPost},
