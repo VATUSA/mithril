@@ -14,7 +14,10 @@ use std::{sync::Arc, time::Duration};
 use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::timeout::TimeoutLayer;
-use utoipa::OpenApi;
+use utoipa::{
+    Modify, OpenApi,
+    openapi::security::{ApiKey, ApiKeyValue, SecurityScheme},
+};
 use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_redoc::{Redoc, Servable};
 
@@ -78,12 +81,33 @@ async fn shutdown_signal() {
 }
 
 #[derive(OpenApi)]
-#[openapi(info(
-    license(name = "VATUSA Website Non-Commercial Public License (VS-NCPL) v1.0"),
-    contact(name = "VATUSA6", email = "vatusa6@vatusa.net"),
-    description=API_DESCRIPTION
-))]
+#[openapi(
+    modifiers(&SecurityAddon),
+    info(
+        license(name = "VATUSA Website Non-Commercial Public License (VS-NCPL) v1.0"),
+        contact(email = "vatusa6@vatusa.net"),
+        description=API_DESCRIPTION
+    ),
+    tags(
+        (name = "events", description = "Network events"),
+        (name = "news", description = "Division and facility news"),
+    )
+)]
 struct ApiDoc;
+
+struct SecurityAddon;
+
+impl Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        let components = openapi
+            .components
+            .get_or_insert_with(utoipa::openapi::Components::default);
+        components.add_security_scheme(
+            "api_key",
+            SecurityScheme::ApiKey(ApiKey::Header(ApiKeyValue::new("x-api-key"))),
+        );
+    }
+}
 
 /// Healthcheck endpoint
 #[utoipa::path(

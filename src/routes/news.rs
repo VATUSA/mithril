@@ -1,5 +1,9 @@
 //! News routes.
 
+// It may be advantageous to limiting updates and deletes to the facility
+// that created them (with ZHQ overide), but that data isn't stored into
+// the underlying table.
+
 use crate::{
     db::NewsPost,
     middleware::RequireAuth,
@@ -23,8 +27,6 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
 }
 
 /// Retrieve news posts
-///
-/// Public route.
 #[utoipa::path(
     get,
     path = "/",
@@ -39,8 +41,6 @@ async fn get_news(State(state): State<Arc<AppState>>) -> Result<Json<Vec<NewsPos
 }
 
 /// Retrieve a single news post
-///
-/// Public route.
 #[utoipa::path(
     get,
     path = "/{id}",
@@ -77,6 +77,9 @@ async fn get_single_news(
         (status = 405, description = "Must be called with POST"),
         (status = 422, description = "Malformed request body"),
         (status = 500, description = "Server error")
+    ),
+    security(
+        ("api_key" = [])
     )
 )]
 async fn create_news(
