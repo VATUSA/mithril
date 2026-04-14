@@ -24,6 +24,18 @@ mod queries;
 mod routes;
 mod shared;
 
+const API_DESCRIPTION: &'static str = r#"VATUSA API.
+
+This API is primarily for VATUSA ARTCCs to be able to interact with the VATUSA
+site programatically. Some routes do not require an API key that facilities have;
+these routes can be used by anyone.
+
+Authorization with an API key, facility or otherwise, is done via the `X-API-Key`
+header in the request. If this header is supplied, it **must be correct**; supplying
+an API key that is invalid will result in an error response. Some public methods
+will return additional data when an API key is included in the request.
+"#;
+
 /// VATUSA API.
 #[derive(Debug, Parser)]
 #[command(version, about, long_about=None)]
@@ -63,6 +75,11 @@ async fn shutdown_signal() {
 }
 
 #[derive(OpenApi)]
+#[openapi(info(
+    license(name = "VATUSA Website Non-Commercial Public License (VS-NCPL) v1.0"),
+    contact(name = "VATUSA6", email = "vatusa6@vatusa.net"),
+    description=API_DESCRIPTION
+))]
 struct ApiDoc;
 
 /// Get health of the API.

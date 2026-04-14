@@ -12,6 +12,7 @@ use crate::{
 use chrono::Utc;
 use serde::Deserialize;
 use sqlx::MySqlPool;
+use utoipa::ToSchema;
 
 // ---------------------------------------------------
 // v3_api_key
@@ -46,29 +47,27 @@ pub async fn get_news_post(db: &MySqlPool, id: i32) -> Result<Option<NewsPost>, 
     Ok(news)
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateNewsPost {
     pub title: String,
     pub body: String,
-    pub author_cid: i32,
-    pub post_time: i64,
-    pub edit_time: i64,
 }
 
 /// Create a new `news_post` row.
 pub async fn create_news_post(db: &MySqlPool, data: &CreateNewsPost) -> Result<u64, AppError> {
-    let id = sqlx::query!(
-        "INSERT INTO news_post (title, body, author_cid, post_time, edit_time) VALUES (?, ?, ?, ?, ?)",
-        data.title,
-        data.body,
-        data.author_cid,
-        data.post_time,
-        data.edit_time,
-    )
-    .execute(db)
-    .await?
-    .last_insert_id();
-    Ok(id)
+    // let id = sqlx::query!(
+    //     "INSERT INTO news_post (title, body, author_cid, post_time, edit_time) VALUES (?, ?, ?, ?, ?)",
+    //     data.title,
+    //     data.body,
+    //     data.author_cid,
+    //     data.post_time,
+    //     data.edit_time,
+    // )
+    // .execute(db)
+    // .await?
+    // .last_insert_id();
+    // Ok(id)
+    todo!()
 }
 
 #[derive(Debug, Deserialize)]
