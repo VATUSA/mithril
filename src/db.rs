@@ -80,52 +80,9 @@ pub struct Event {
     pub updated_by: i32,
 }
 
+/// **Table**: `academy_exam_assignments`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct AcademyBasicExamEmails {
-    pub id: u32,
-    pub attempt_id: i32,
-    pub student_id: i32,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct AcademyCompetency {
-    pub id: i32,
-    pub cid: Option<i32>,
-    pub academy_course_id: Option<i32>,
-    pub completion_timestamp: Option<NaiveDateTime>,
-    pub expiration_timestamp: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
-    pub created_at: Option<NaiveDateTime>,
-    pub rating: i32,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct AcademyCourse {
-    pub id: i32,
-    pub name: String,
-    pub list_order: Option<i32>,
-    pub moodle_enrol_id: Option<i32>,
-    pub moodle_quiz_id: Option<i32>,
-    pub passing_percent: i32,
-    pub rating: i32,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct AcademyCourseEnrollment {
-    pub id: i32,
-    pub cid: i32,
-    pub academy_course_id: i32,
-    pub assignment_timestamp: Option<NaiveDateTime>,
-    pub passed_timestamp: Option<NaiveDateTime>,
-    pub status: i32,
-    pub updated_at: Option<NaiveDateTime>,
-    pub created_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct AcademyExamAssignments {
+pub struct AcademyExamAssignment {
     pub id: u32,
     pub student_id: i32,
     pub instructor_id: i32,
@@ -139,6 +96,7 @@ pub struct AcademyExamAssignments {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `action_log`
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ActionLog {
     pub id: i32,
@@ -149,6 +107,7 @@ pub struct ActionLog {
     pub updated_at: NaiveDateTime,
 }
 
+/// **Table**: `api_log`
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ApiLog {
     pub id: u64,
@@ -159,26 +118,7 @@ pub struct ApiLog {
     pub data: String,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
-pub struct ChecklistData {
-    pub id: u32,
-    pub checklist_id: u32,
-    pub item: String,
-    pub r#order: u32,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Checklists {
-    pub id: u32,
-    pub name: String,
-    pub active: i32,
-    pub r#order: u32,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
+/// **Table**: `controller_eligibility_cache`
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ControllerEligibilityCache {
     pub cid: i32,
@@ -195,23 +135,10 @@ pub struct ControllerEligibilityCache {
     pub updated_at: Option<NaiveDateTime>,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
-pub struct ControllerTraining {
-    pub id: u32,
-    pub student_cid: u32,
-    pub instructor_cid: u32,
-    pub facility: String,
-    pub position: String,
-    pub r#type: String,
-    pub checklist_name: String,
-    pub checklist_data: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
+/// **Table**: `controllers`
 #[allow(non_snake_case)]
 #[derive(Debug, Serialize, ToSchema)]
-pub struct Controllers {
+pub struct Controller {
     pub cid: u32,
     pub fname: String,
     pub lname: String,
@@ -240,8 +167,9 @@ pub struct Controllers {
     pub last_competency_date: Option<NaiveDate>,
 }
 
+/// **Table**: `email_accounts`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct EmailAccounts {
+pub struct EmailAccount {
     pub id: u32,
     pub facility: String,
     pub username: String,
@@ -250,6 +178,7 @@ pub struct EmailAccounts {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `email_config`
 #[derive(Debug, Serialize, ToSchema)]
 pub struct EmailConfig {
     pub address: String,
@@ -259,22 +188,9 @@ pub struct EmailConfig {
     pub updated_at: Option<String>,
 }
 
+/// **Table**: `email_templates`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct EmailOutbound {
-    pub id: i32,
-    pub from_email: Option<String>,
-    pub from_name: Option<String>,
-    pub reply_to_email: Option<String>,
-    pub to_emails: Option<String>,
-    pub bcc_emails: Option<String>,
-    pub subject: String,
-    pub body: String,
-    pub lock_key: Option<String>,
-    pub processed: Option<bool>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct EmailTemplates {
+pub struct EmailTemplate {
     pub id: u32,
     pub facility_id: String,
     pub template: String,
@@ -283,83 +199,9 @@ pub struct EmailTemplates {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `facilities`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct ExamAssignments {
-    pub id: u64,
-    pub cid: u32,
-    pub exam_id: u32,
-    pub instructor_id: u32,
-    pub assigned_date: NaiveDateTime,
-    pub expire_date: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct ExamGenerated {
-    pub id: u32,
-    pub cid: u32,
-    pub exam_id: u32,
-    pub question_id: u32,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct ExamQuestions {
-    pub id: u32,
-    pub exam_id: u32,
-    pub question: String,
-    pub r#type: i32,
-    pub answer: String,
-    pub alt1: String,
-    pub alt2: String,
-    pub alt3: String,
-    pub notes: Option<String>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct ExamReassignments {
-    pub id: u64,
-    pub cid: u32,
-    pub exam_id: u32,
-    pub reassign_date: NaiveDateTime,
-    pub instructor_id: u32,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct ExamResults {
-    pub id: u64,
-    pub exam_id: u64,
-    pub exam_name: String,
-    pub cid: i32,
-    pub score: i32,
-    pub passed: i32,
-    pub date: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct ExamResultsData {
-    pub id: u32,
-    pub result_id: u64,
-    pub question: String,
-    pub correct: String,
-    pub selected: Option<String>,
-    pub notes: String,
-    pub is_correct: i32,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Exams {
-    pub id: u32,
-    pub facility_id: String,
-    pub name: String,
-    pub number: i32,
-    pub is_active: i32,
-    pub cbt_required: Option<u64>,
-    pub retake_period: i32,
-    pub passing_score: i32,
-    pub answer_visibility: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Facilities {
+pub struct Facility {
     pub id: String,
     pub name: String,
     pub url: String,
@@ -388,63 +230,18 @@ pub struct Facilities {
     pub url_dev: String,
 }
 
+/// **Table**: `knowledgebase_categories`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct FacilityTrends {
-    pub id: u64,
-    pub date: NaiveDate,
-    pub facility: String,
-    pub obs: i32,
-    pub obsg30: i32,
-    pub s1: i32,
-    pub s2: i32,
-    pub s3: i32,
-    pub c1: i32,
-    pub c3: i32,
-    pub i1: i32,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct FailedJobs {
-    pub id: u64,
-    pub uuid: String,
-    pub connection: String,
-    pub queue: String,
-    pub payload: String,
-    pub exception: String,
-    pub failed_at: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Flights {
-    pub callsign: String,
-    pub lat: String,
-    pub long: String,
-    pub hdg: i32,
-    pub dest: String,
-    pub dep: String,
-    pub r#type: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Jobs {
-    pub id: u32,
-    pub r#type: String,
-    pub data: String,
-    pub status: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct KnowledgebaseCategories {
+pub struct KnowledgebaseCategory {
     pub id: u32,
     pub name: String,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
 }
 
+/// **Table**: `knowledgebase_questions`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct KnowledgebaseQuestions {
+pub struct KnowledgebaseQuestion {
     pub id: u32,
     pub category_id: u32,
     pub r#order: u32,
@@ -455,60 +252,9 @@ pub struct KnowledgebaseQuestions {
     pub updated_at: NaiveDateTime,
 }
 
+/// **Table**: `ots_evals`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct LoginTokens {
-    pub token: String,
-    pub cid: u32,
-    pub timestamp: NaiveDateTime,
-    pub ip: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Memberships {
-    pub cid: u32,
-    pub rating: u32,
-    pub facility_id: String,
-    pub r#type: i32,
-    pub joined: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Migrations {
-    pub id: i32,
-    pub migration: String,
-    pub batch: i32,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct OauthClients {
-    pub id: u64,
-    pub name: String,
-    pub client_id: Option<String>,
-    pub client_secret: Option<String>,
-    pub redirect_uris: Option<String>,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct OauthLogins {
-    pub id: u64,
-    pub token: Option<String>,
-    pub code: Option<String>,
-    pub user_agent: Option<String>,
-    pub redirect_uri: Option<String>,
-    pub client_id: Option<u64>,
-    pub state: Option<String>,
-    pub code_challenge: Option<String>,
-    pub code_challenge_method: Option<String>,
-    pub scope: Option<String>,
-    pub c_id: Option<u64>,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct OtsEvals {
+pub struct OtsEval {
     pub id: u32,
     pub training_record_id: Option<i32>,
     pub student_id: i32,
@@ -524,8 +270,9 @@ pub struct OtsEvals {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `ots_evals_forms`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct OtsEvalsForms {
+pub struct OtsEvalsForm {
     pub id: u32,
     pub name: String,
     pub rating_id: i32,
@@ -538,8 +285,9 @@ pub struct OtsEvalsForms {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `ots_evals_indicator_results`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct OtsEvalsIndicatorResults {
+pub struct OtsEvalsIndicatorResult {
     pub id: u32,
     pub perf_indicator_id: u32,
     pub eval_id: u32,
@@ -549,8 +297,9 @@ pub struct OtsEvalsIndicatorResults {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `ots_evals_perf_cats`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct OtsEvalsPerfCats {
+pub struct OtsEvalsPerfCat {
     pub id: u32,
     pub label: String,
     pub form_id: u32,
@@ -559,8 +308,9 @@ pub struct OtsEvalsPerfCats {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `ots_evals_perf_indicators`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct OtsEvalsPerfIndicators {
+pub struct OtsEvalsPerfIndicator {
     pub id: u32,
     pub perf_cat_id: u32,
     pub label: String,
@@ -575,41 +325,9 @@ pub struct OtsEvalsPerfIndicators {
     pub created_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `promotions`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct PasswordResets {
-    pub email: String,
-    pub token: String,
-    pub created_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Policies {
-    pub id: u32,
-    pub ident: String,
-    pub category: u32,
-    pub title: String,
-    pub slug: String,
-    pub description: String,
-    pub extension: String,
-    pub effective_date: Option<NaiveDate>,
-    pub perms: String,
-    pub visible: bool,
-    pub r#order: u16,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct PolicyCategories {
-    pub id: u32,
-    pub name: String,
-    pub r#order: u16,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Promotions {
+pub struct Promotion {
     pub id: i32,
     pub cid: i32,
     pub grantor: u32,
@@ -623,55 +341,17 @@ pub struct Promotions {
     pub eval_id: Option<u32>,
 }
 
+/// **Table**: `ratings`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct Promotionstest {
-    pub id: i32,
-    pub cid: i32,
-    pub grantor: u32,
-    pub r#to: i32,
-    pub r#from: i32,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-    pub exam: NaiveDate,
-    pub examiner: u32,
-    pub position: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct PushLog {
-    pub id: i32,
-    pub created_at: NaiveDateTime,
-    pub updated_at: Option<NaiveDate>,
-    pub title: String,
-    pub message: String,
-    pub submitted_by: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Ratings {
+pub struct Rating {
     pub id: i32,
     pub short: String,
     pub long: String,
 }
 
+/// **Table**: `roles`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct ReturnPaths {
-    pub id: u32,
-    pub r#order: i32,
-    pub facility_id: String,
-    pub url: String,
-    pub created_at: Option<NaiveDateTime>,
-    pub updated_at: Option<NaiveDateTime>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct RoleTitles {
-    pub role: String,
-    pub title: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Roles {
+pub struct Role {
     pub id: u64,
     pub cid: u32,
     pub facility: String,
@@ -679,18 +359,9 @@ pub struct Roles {
     pub created_at: NaiveDateTime,
 }
 
+/// **Table**: `solo_certs`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct Sessions {
-    pub id: String,
-    pub user_id: Option<u32>,
-    pub ip_address: Option<String>,
-    pub user_agent: Option<String>,
-    pub payload: String,
-    pub last_activity: i32,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct SoloCerts {
+pub struct SoloCert {
     pub id: u32,
     pub cid: u32,
     pub position: String,
@@ -699,15 +370,9 @@ pub struct SoloCerts {
     pub updated_at: NaiveDateTime,
 }
 
+/// **Table**: `survey_assignments`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct StatsArchive {
-    pub id: i64,
-    pub date: NaiveDate,
-    pub data: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct SurveyAssignments {
+pub struct SurveyAssignment {
     pub id: String,
     pub survey_id: i32,
     pub facility: String,
@@ -718,8 +383,9 @@ pub struct SurveyAssignments {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `survey_questions`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct SurveyQuestions {
+pub struct SurveyQuestion {
     pub id: u32,
     pub survey_id: i32,
     pub question: String,
@@ -729,8 +395,9 @@ pub struct SurveyQuestions {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `survey_submissions`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct SurveySubmissions {
+pub struct SurveySubmission {
     pub id: u32,
     pub survey_id: i32,
     pub question_id: i32,
@@ -741,8 +408,9 @@ pub struct SurveySubmissions {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `surveys`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct Surveys {
+pub struct Survey {
     pub id: u32,
     pub facility: String,
     pub name: String,
@@ -750,79 +418,18 @@ pub struct Surveys {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `tmu_facilities`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct Tickets {
-    pub id: u32,
-    pub cid: i32,
-    pub subject: String,
-    pub body: String,
-    pub status: String,
-    pub facility: String,
-    pub assigned_to: String,
-    pub notes: String,
-    pub priority: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct TicketsHistory {
-    pub id: u64,
-    pub ticket_id: u64,
-    pub entry: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct TicketsNotes {
-    pub id: u32,
-    pub ticket_id: i32,
-    pub cid: i32,
-    pub note: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct TicketsReplies {
-    pub id: u32,
-    pub ticket_id: i32,
-    pub cid: i32,
-    pub body: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct TmuColors {
-    pub id: String,
-    pub black: Option<String>,
-    pub brown: Option<String>,
-    pub blue: Option<String>,
-    pub gray: Option<String>,
-    pub green: Option<String>,
-    pub lime: Option<String>,
-    pub cyan: Option<String>,
-    pub orange: Option<String>,
-    pub red: Option<String>,
-    pub purple: Option<String>,
-    pub white: Option<String>,
-    pub yellow: Option<String>,
-    pub violet: Option<String>,
-    pub guide: Option<String>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct TmuFacilities {
+pub struct TmuFacility {
     pub id: String,
     pub parent: Option<String>,
     pub name: String,
     pub coords: String,
 }
 
+/// **Table**: `tmu_notices`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct TmuNotices {
+pub struct TmuNotice {
     pub id: u32,
     pub tmu_facility_id: String,
     pub priority: i16,
@@ -835,35 +442,9 @@ pub struct TmuNotices {
     pub is_pref_route: bool,
 }
 
+/// **Table**: `training_records`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct TrainingBlocks {
-    pub id: u64,
-    pub facility: String,
-    pub r#order: i32,
-    pub name: String,
-    pub level: String,
-    pub visible: bool,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct TrainingChapters {
-    pub id: u64,
-    pub blockid: u64,
-    pub r#order: i32,
-    pub name: String,
-    pub url: String,
-    pub visible: bool,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct TrainingProgress {
-    pub cid: u32,
-    pub chapterid: u64,
-    pub date: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct TrainingRecords {
+pub struct TrainingRecord {
     pub id: u32,
     pub student_id: i32,
     pub instructor_id: i32,
@@ -884,8 +465,9 @@ pub struct TrainingRecords {
     pub updated_at: Option<NaiveDateTime>,
 }
 
+/// **Table**: `transfers`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct Transfers {
+pub struct Transfer {
     pub id: u32,
     pub cid: u32,
     pub r#to: String,
@@ -898,29 +480,9 @@ pub struct Transfers {
     pub updated_at: NaiveDateTime,
 }
 
+/// **Table**: `visits`
 #[derive(Debug, Serialize, ToSchema)]
-pub struct UlsTokens {
-    pub facility: String,
-    pub token: String,
-    pub date: NaiveDateTime,
-    pub ip: String,
-    pub cid: u32,
-    pub expired: i32,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Users {
-    pub id: u32,
-    pub name: String,
-    pub email: String,
-    pub password: String,
-    pub remember_token: Option<String>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct Visits {
+pub struct Visit {
     pub id: u64,
     pub cid: u32,
     pub facility: String,
