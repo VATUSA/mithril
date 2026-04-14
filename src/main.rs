@@ -24,7 +24,7 @@ mod queries;
 mod routes;
 mod shared;
 
-const API_DESCRIPTION: &'static str = r#"VATUSA API.
+const API_DESCRIPTION: &str = r#"VATUSA API.
 
 This API is primarily for VATUSA ARTCCs to be able to interact with the VATUSA
 site programatically. Some routes do not require an API key that facilities have;
