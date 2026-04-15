@@ -47,6 +47,7 @@ pub struct ApiKey {
     pub notes: Option<String>,
     pub created_at: i64,
     pub updated_at: Option<i64>,
+    pub deleted_at: Option<i64>,
 }
 
 /// News posts, Cobalt DB.

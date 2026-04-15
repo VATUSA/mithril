@@ -19,12 +19,17 @@ use utoipa::ToSchema;
 // ---------------------------------------------------
 
 /// Get an API key from the DB by its code.
+///
+/// This function will not return a key that has the `deleted_at` field set
+/// to anything other than NULL. This allows for soft-deletes of API keys
+/// so as to not disturb previous logs.
 pub async fn get_api_key(db: &MySqlPool, code: &str) -> Result<Option<ApiKey>, AppError> {
     // I hate MySQL
     let api_key = sqlx::query_as!(
         ApiKey,
         r#"SELECT id, code, testing as "testing: bool", facility, notes,
-        created_at, updated_at FROM v3_api_key WHERE code = ?"#,
+        created_at, updated_at, deleted_at FROM v3_api_key WHERE code = ?
+        AND deleted_at IS NULL"#,
         code
     )
     .fetch_optional(db)

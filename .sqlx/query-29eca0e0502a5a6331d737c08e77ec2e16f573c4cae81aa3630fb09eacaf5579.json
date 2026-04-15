@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT id, code, testing as \"testing: bool\", facility, notes,\n        created_at, updated_at FROM v3_api_key WHERE code = ?",
+  "query": "SELECT id, code, testing as \"testing: bool\", facility, notes,\n        created_at, updated_at, deleted_at FROM v3_api_key WHERE code = ?\n        AND deleted_at IS NULL",
   "describe": {
     "columns": [
       {
@@ -65,6 +65,15 @@
           "flags": "",
           "max_size": 20
         }
+      },
+      {
+        "ordinal": 7,
+        "name": "deleted_at",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "",
+          "max_size": 20
+        }
       }
     ],
     "parameters": {
@@ -77,8 +86,9 @@
       true,
       true,
       false,
+      true,
       true
     ]
   },
-  "hash": "06530de33e4d94f15842ee699fcc692a51d2f9156eaa394f71f947fa009d21e4"
+  "hash": "29eca0e0502a5a6331d737c08e77ec2e16f573c4cae81aa3630fb09eacaf5579"
 }
