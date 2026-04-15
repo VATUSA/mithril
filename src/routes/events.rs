@@ -1,8 +1,6 @@
 //! Events routes.
 
-// It may be advantageous to limiting updates and deletes to the facility
-// that created them (with ZHQ overide), but that data isn't stored into
-// the underlying table.
+// TODO limit updates and deletes to the facility that created them (with ZHQ overide).
 
 use crate::{
     db::Event,
@@ -113,6 +111,7 @@ async fn create_event(
         (status = 200, description = "Event updated"),
         (status = 400, description = "Malformed request"),
         (status = 401, description = "Must be called with an API key"),
+        (status = 403, description = "Cannot edit this event"),
         (status = 404, description = "No matching event found"),
         (status = 405, description = "Must be called with PATCH"),
         (status = 422, description = "Malformed request body"),
@@ -140,6 +139,14 @@ async fn update_event(
     };
     if !auth.testing {
         let facility = determine_facility(&auth, &data)?;
+        if event.facility != facility && facility != "ZHQ" {
+            tracing::info!(
+                "Key {} tried to update event for {}",
+                auth.key_id,
+                event.facility
+            );
+            return Err(AppError::InsufficientPermissions);
+        }
         queries::update_event(&state.cobalt_db, id, &data, &facility).await?;
         tracing::info!("Key {} used to update event {}", auth.key_id, event.id);
     } else {
@@ -160,6 +167,7 @@ async fn update_event(
         (status = 204, description = "Event deleted"),
         (status = 400, description = "Malformed request"),
         (status = 401, description = "Must be called with an API key"),
+        (status = 403, description = "Cannot delete this event"),
         (status = 404, description = "No matching event found"),
         (status = 405, description = "Must be called with DELETE"),
         (status = 422, description = "Malformed request body"),
@@ -185,6 +193,15 @@ async fn delete_event(
         }
     };
     if !auth.testing {
+        let facility = auth.facility.as_deref().unwrap_or_default();
+        if event.facility != facility && facility != "ZHQ" {
+            tracing::info!(
+                "Key {} tried to delete event for {}",
+                auth.key_id,
+                event.facility
+            );
+            return Err(AppError::InsufficientPermissions);
+        }
         queries::delete_event(&state.cobalt_db, id).await?;
         tracing::info!(
             "Key {} used to delete event {}: was '{}' for {}",

@@ -153,8 +153,8 @@ pub async fn create_event(
 ) -> Result<u64, AppError> {
     let id = sqlx::query!(
         r#"INSERT INTO event
-        (title, body, banner_image_url, facility, start_time, end_time, created_at, created_by)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)"#,
+        (title, body, banner_image_url, facility, start_time, end_time, created_at, created_by, updated_by, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"#,
         data.title,
         data.body,
         data.banner_image_url,
@@ -162,7 +162,9 @@ pub async fn create_event(
         data.start_time,
         data.end_time,
         Utc::now().timestamp_millis(),
-        data.created_by
+        data.created_by,
+        0,
+        0
     )
     .execute(db)
     .await?
