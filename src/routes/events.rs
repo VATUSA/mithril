@@ -63,6 +63,10 @@ async fn get_single_event(
 }
 
 /// Create an event
+///
+/// Facilities should omit the "facility" field in the payload; this field exists
+/// so VATUSA staff can add a specific event should they need to. The facility field
+/// will resolve to the facility who owns the API key used in the request.
 #[utoipa::path(
     post,
     path = "/",
@@ -102,6 +106,14 @@ async fn create_event(
 }
 
 /// Update an existing event
+///
+/// An event can only be updated with API keys belonging to the facility that
+/// created the event, or to keys belonging to VATUSA staff.
+///
+/// Facilities should omit the "facility" field in the payload; this field exists
+/// so VATUSA staff can edit an event should they need to. The facility field
+/// will resolve to the facility who owns the API key used in the request.
+
 #[utoipa::path(
     patch,
     path = "/{id}",
@@ -159,6 +171,10 @@ async fn update_event(
 }
 
 /// Delete an existing event
+///
+/// An event can only be deleted with API keys belonging to the facility that
+/// created the event, or to keys belonging to VATUSA staff.
+
 #[utoipa::path(
     delete,
     path = "/{id}",

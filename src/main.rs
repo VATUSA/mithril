@@ -31,7 +31,8 @@ const API_DESCRIPTION: &str = r#"VATUSA API.
 
 This API is primarily for VATUSA ARTCCs to be able to interact with the VATUSA
 site programatically. Some routes do not require an API key that facilities have;
-these routes can be used by anyone.
+these routes can be used by anyone. Some API keys may be granted to users for
+specific non-facility use.
 
 Authorization with an API key, facility or otherwise, is done via the `X-API-Key`
 header in the request. If this header is supplied, it **must be correct**; supplying
