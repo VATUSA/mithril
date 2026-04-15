@@ -121,6 +121,9 @@ async fn create_news(
     ),
     params(
         ("id" = i32, Path, description = "News post ID")
+    ),
+    security(
+        ("api_key" = [])
     )
 )]
 async fn update_news(
@@ -130,16 +133,15 @@ async fn update_news(
     extract::Json(data): extract::Json<UpdateNewsPost>,
 ) -> Result<StatusCode, AppError> {
     let news = queries::get_news_post(&state.cobalt_db, id).await?;
-    if news.is_none() {
-        return Err(AppError::NotFound("event not found"));
-    }
+    let news = match news {
+        Some(n) => n,
+        None => {
+            return Err(AppError::NotFound("news post not found"));
+        }
+    };
     if !auth.testing {
         queries::update_news_post(&state.cobalt_db, id, &data).await?;
-        tracing::info!(
-            "Key {} used to update news post {}",
-            auth.key_id,
-            news.unwrap().id
-        );
+        tracing::info!("Key {} used to update news post {}", auth.key_id, news.id);
     } else {
         tracing::debug!("Testing key {} called on news update endpoint", auth.key_id);
     }
@@ -162,6 +164,9 @@ async fn update_news(
     ),
     params(
         ("id" = i32, Path, description = "News post ID")
+    ),
+    security(
+        ("api_key" = [])
     )
 )]
 async fn delete_news(
@@ -173,7 +178,7 @@ async fn delete_news(
     let news = match news {
         Some(n) => n,
         None => {
-            return Err(AppError::NotFound("event not found"));
+            return Err(AppError::NotFound("news post not found"));
         }
     };
     if !auth.testing {
@@ -181,8 +186,8 @@ async fn delete_news(
         tracing::info!(
             "Key {} used to delete news post {}, title was '{}'",
             auth.key_id,
-            news.title,
             news.id,
+            news.title,
         );
     } else {
         tracing::debug!("Testing key {} called on news delete endpoint", auth.key_id);
