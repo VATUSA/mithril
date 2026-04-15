@@ -50,7 +50,7 @@ async fn get_news(State(state): State<Arc<AppState>>) -> Result<Json<Vec<NewsPos
         (status = 404, description = "No matching news post found")
     ),
     params(
-        ("id" = i32, Path, description = "Event ID")
+        ("id" = i32, Path, description = "News post ID")
     )
 )]
 async fn get_single_news(
@@ -120,7 +120,7 @@ async fn create_news(
         (status = 500, description = "Server error")
     ),
     params(
-        ("id" = i32, Path, description = "Event ID")
+        ("id" = i32, Path, description = "News post ID")
     )
 )]
 async fn update_news(
@@ -161,7 +161,7 @@ async fn update_news(
         (status = 500, description = "Server error")
     ),
     params(
-        ("id" = i32, Path, description = "Event ID")
+        ("id" = i32, Path, description = "News post ID")
     )
 )]
 async fn delete_news(
