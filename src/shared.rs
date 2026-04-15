@@ -102,9 +102,9 @@ impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let status = self.status_code();
         if status.is_server_error() {
-            tracing::error!(error = %self, "request failed");
+            tracing::error!(error = ?self, "request failed");
         } else {
-            tracing::warn!(error = %self, "request failed");
+            tracing::warn!(error = ?self, "request failed");
         }
         let body = ErrorResponse {
             error: ErrorBody {
