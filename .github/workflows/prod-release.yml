@@ -1,0 +1,27 @@
+name: Dev Release
+
+# This workflow allows me to push to master without triggering anything,
+# and build a release build to push to dev. This behavior will change
+# sooner to actual release.
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Commit SHA to checkout (optional)"
+        required: false
+        default: ""
+
+jobs:
+  common-build:
+    uses: vatusa/gitops/.github/workflows/common-build.yml@main
+    with:
+      image-name: "mithril"
+    secrets: inherit
+  common-dev-ci:
+    uses: vatusa/gitops/.github/workflows/common-dev-ci.yml@main
+    needs: common-build
+    with:
+      image-name: "mithril"
+      kustomization-folder: "mithril"
+    secrets: inherit
