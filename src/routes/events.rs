@@ -8,7 +8,7 @@ use crate::{
     db::Event,
     middleware::RequireAuth,
     queries::{self, CreateEvent, UpdateEvent},
-    shared::{AppError, AppState},
+    shared::{AppError, AppState, determine_facility},
 };
 use axum::{
     Json,
@@ -88,13 +88,14 @@ async fn create_event(
     extract::Json(data): extract::Json<CreateEvent>,
 ) -> Result<StatusCode, AppError> {
     if !auth.testing {
-        let id = queries::create_event(&state.cobalt_db, &data).await?;
+        let facility = determine_facility(&auth, &data)?;
+        let id = queries::create_event(&state.cobalt_db, &data, &facility).await?;
         tracing::info!(
             "Key {} used to create event {}: '{}' for {}",
             auth.key_id,
             id,
             data.title,
-            data.facility
+            facility
         );
     } else {
         tracing::debug!("Testing key {} used on create event endpoint", auth.key_id);
@@ -138,7 +139,8 @@ async fn update_event(
         }
     };
     if !auth.testing {
-        queries::update_event(&state.cobalt_db, id, &data).await?;
+        let facility = determine_facility(&auth, &data)?;
+        queries::update_event(&state.cobalt_db, id, &data, &facility).await?;
         tracing::info!("Key {} used to update event {}", auth.key_id, event.id);
     } else {
         tracing::debug!(

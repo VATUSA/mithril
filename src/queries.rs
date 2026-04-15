@@ -7,7 +7,7 @@
 
 use crate::{
     db::{ApiKey, Event, NewsPost},
-    shared::AppError,
+    shared::{AppError, HasFacility},
 };
 use chrono::Utc;
 use serde::Deserialize;
@@ -131,14 +131,26 @@ pub struct CreateEvent {
     pub title: String,
     pub body: String,
     pub banner_image_url: String,
-    pub facility: String,
+    /// This field is for division overwrites; facilities should omit
+    /// this in their request
+    pub facility: Option<String>,
     pub start_time: i64,
     pub end_time: i64,
     pub created_by: i32,
 }
 
+impl HasFacility for &CreateEvent {
+    fn facility(&self) -> Option<String> {
+        self.facility.clone()
+    }
+}
+
 /// Create a new `event` row.
-pub async fn create_event(db: &MySqlPool, data: &CreateEvent) -> Result<u64, AppError> {
+pub async fn create_event(
+    db: &MySqlPool,
+    data: &CreateEvent,
+    facility: &str,
+) -> Result<u64, AppError> {
     let id = sqlx::query!(
         r#"INSERT INTO event
         (title, body, banner_image_url, facility, start_time, end_time, created_at, created_by)
@@ -146,7 +158,7 @@ pub async fn create_event(db: &MySqlPool, data: &CreateEvent) -> Result<u64, App
         data.title,
         data.body,
         data.banner_image_url,
-        data.facility,
+        facility,
         data.start_time,
         data.end_time,
         Utc::now().timestamp_millis(),
@@ -163,21 +175,34 @@ pub struct UpdateEvent {
     pub title: String,
     pub body: String,
     pub banner_image_url: String,
-    pub facility: String,
+    /// This field is for division overwrites; facilities should omit
+    /// this in their request
+    pub facility: Option<String>,
     pub start_time: i64,
     pub end_time: i64,
     pub updated_by: i32,
 }
 
+impl HasFacility for &UpdateEvent {
+    fn facility(&self) -> Option<String> {
+        self.facility.clone()
+    }
+}
+
 /// Update an `event` row.
-pub async fn update_event(db: &MySqlPool, id: i32, data: &UpdateEvent) -> Result<(), AppError> {
+pub async fn update_event(
+    db: &MySqlPool,
+    id: i32,
+    data: &UpdateEvent,
+    facility: &str,
+) -> Result<(), AppError> {
     sqlx::query!(
         r#"UPDATE event SET title=?, body=?, banner_image_url=?, facility=?,
         start_time=?, end_time=?, updated_at=?, updated_by=? WHERE id = ?"#,
         data.title,
         data.body,
         data.banner_image_url,
-        data.facility,
+        facility,
         data.start_time,
         data.end_time,
         Utc::now().timestamp_millis(),

@@ -8,6 +8,8 @@ use http::StatusCode;
 use serde::Serialize;
 use sqlx::MySqlPool;
 
+use crate::middleware::RequireAuth;
+
 /// Application state available to route functions.
 pub struct AppState {
     /// Connection to the "old" VATUSA DB
@@ -128,4 +130,26 @@ pub enum Auth {
         facility: Option<String>,
         testing: bool,
     },
+}
+
+/// Helper trait for payloads that include an optional facility field.
+pub trait HasFacility {
+    /// Return the optional facility field from the struct.
+    fn facility(&self) -> Option<String>;
+}
+
+/// Determine which facility should be used for the DB query.
+///
+/// ZHQ keys can set the facility but fall back to "ZHQ"; non-ZHQ
+/// keys can _only_ use the facility tied to the key, if any. If
+/// the key does not have a facility, an error is returned.
+pub fn determine_facility(auth: &RequireAuth, data: impl HasFacility) -> Result<String, AppError> {
+    match auth.facility.as_deref() {
+        Some("ZHQ") => Ok(data
+            .facility()
+            .clone()
+            .unwrap_or_else(|| String::from("ZHQ"))),
+        Some(facility) => Ok(String::from(facility)),
+        None => Err(AppError::ApiKeyRequired),
+    }
 }
