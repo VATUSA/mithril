@@ -146,11 +146,14 @@ async fn main() -> Result<()> {
         .finish();
     tracing::subscriber::set_global_default(subscriber).context("Unable to configure logging")?;
 
+    tracing::debug!("Connecting to databases");
     let app_state = Arc::new(shared::AppState {
         vatusa_db: connect_vatusa().await.context("vatusa db")?,
         cobalt_db: connect_cobalt().await.context("cobalt db")?,
     });
+    tracing::debug!("Connected");
 
+    tracing::debug!("Setting up app");
     let (app, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .with_state(app_state.clone())
         .routes(routes!(health))
