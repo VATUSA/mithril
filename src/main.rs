@@ -35,11 +35,11 @@ these routes can be used by anyone.
 
 Authorization with an API key, facility or otherwise, is done via the `X-API-Key`
 header in the request. If this header is supplied, it **must be correct**; supplying
-an API key that is invalid will result in an error response. Some public methods
-will return additional data when an API key is included in the request.
+an API key that is invalid will result in an error response, even if the endpoint
+allows calling without a key. Some public methods will return additional data when
+an API key is included in the request.
 
-This documentation is generated directly from the code and should always be up
-to date.
+This documentation is generated from the code and should always be up to date.
 "#;
 
 /// VATUSA API.

@@ -24,7 +24,7 @@ pub async fn get_api_key(db: &MySqlPool, code: &str) -> Result<Option<ApiKey>, A
     let api_key = sqlx::query_as!(
         ApiKey,
         r#"SELECT id, code, testing as "testing: bool", facility, notes,
-created_at, updated_at FROM v3_api_key WHERE code = ?"#,
+        created_at, updated_at FROM v3_api_key WHERE code = ?"#,
         code
     )
     .fetch_optional(db)
@@ -126,7 +126,7 @@ pub async fn get_event(db: &MySqlPool, id: i32) -> Result<Option<Event>, AppErro
     Ok(events)
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateEvent {
     pub title: String,
     pub body: String,
@@ -158,22 +158,19 @@ pub async fn create_event(db: &MySqlPool, data: &CreateEvent) -> Result<u64, App
     Ok(id)
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateEvent {
-    pub id: i64,
     pub title: String,
     pub body: String,
     pub banner_image_url: String,
     pub facility: String,
     pub start_time: i64,
     pub end_time: i64,
-    pub created_at: i64,
-    pub created_by: i32,
     pub updated_by: i32,
 }
 
 /// Update an `event` row.
-pub async fn update_event(db: &MySqlPool, data: &UpdateEvent) -> Result<(), AppError> {
+pub async fn update_event(db: &MySqlPool, id: i32, data: &UpdateEvent) -> Result<(), AppError> {
     sqlx::query!(
         r#"UPDATE event SET title=?, body=?, banner_image_url=?, facility=?,
         start_time=?, end_time=?, updated_at=?, updated_by=? WHERE id = ?"#,
@@ -185,7 +182,7 @@ pub async fn update_event(db: &MySqlPool, data: &UpdateEvent) -> Result<(), AppE
         data.end_time,
         Utc::now().timestamp_millis(),
         data.updated_by,
-        data.id,
+        id,
     )
     .execute(db)
     .await?;
@@ -193,7 +190,7 @@ pub async fn update_event(db: &MySqlPool, data: &UpdateEvent) -> Result<(), AppE
 }
 
 /// Delete an `event` row.
-pub async fn delete_event(db: &MySqlPool, id: u64) -> Result<(), AppError> {
+pub async fn delete_event(db: &MySqlPool, id: i32) -> Result<(), AppError> {
     sqlx::query!("DELETE FROM event WHERE id = ?", id)
         .execute(db)
         .await?;

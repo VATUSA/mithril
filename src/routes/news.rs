@@ -104,6 +104,9 @@ async fn create_news(
     Ok(StatusCode::CREATED)
 }
 
+// TODO It'd be nice if the caller didn't have to specify all
+// the fields, but rather just the fields they want to change.
+
 /// Update an existing news posting
 #[utoipa::path(
     patch,
@@ -186,7 +189,7 @@ async fn delete_news(
         tracing::info!(
             "Key {} used to delete news post {}, title was '{}'",
             auth.key_id,
-            news.id,
+            id,
             news.title,
         );
     } else {

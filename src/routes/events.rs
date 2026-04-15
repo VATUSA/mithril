@@ -1,22 +1,28 @@
 //! Events routes.
 
+// It may be advantageous to limiting updates and deletes to the facility
+// that created them (with ZHQ overide), but that data isn't stored into
+// the underlying table.
+
 use crate::{
     db::Event,
-    queries,
+    middleware::RequireAuth,
+    queries::{self, CreateEvent, UpdateEvent},
     shared::{AppError, AppState},
 };
 use axum::{
     Json,
-    extract::{Path, State},
+    extract::{self, Path, State},
 };
+use http::StatusCode;
 use std::sync::Arc;
 use utoipa_axum::{router::OpenApiRouter, routes};
 
 /// Register routes.
 pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     OpenApiRouter::new()
-        .routes(routes!(get_events))
-        .routes(routes!(get_event))
+        .routes(routes!(get_events, create_event))
+        .routes(routes!(get_single_event, update_event, delete_event))
         .with_state(state)
 }
 
@@ -42,9 +48,12 @@ async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event
     responses(
         (status = 200, description = "Event", body = Event),
         (status = 404, description = "No matching event found")
+    ),
+    params(
+        ("id" = i32, Path, description = "Event ID")
     )
 )]
-async fn get_event(
+async fn get_single_event(
     Path(id): Path<i32>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Event>, AppError> {
@@ -55,8 +64,138 @@ async fn get_event(
     }
 }
 
-async fn create_event() {}
+/// Create an event
+#[utoipa::path(
+    post,
+    path = "/",
+    tag = "events",
+    request_body = CreateEvent,
+    responses(
+        (status = 201, description = "Event created"),
+        (status = 400, description = "Malformed request"),
+        (status = 401, description = "Must be called with an API key"),
+        (status = 405, description = "Must be called with POST"),
+        (status = 422, description = "Malformed request body"),
+        (status = 500, description = "Server error")
+    ),
+    security(
+        ("api_key" = [])
+    )
+)]
+async fn create_event(
+    State(state): State<Arc<AppState>>,
+    auth: RequireAuth,
+    extract::Json(data): extract::Json<CreateEvent>,
+) -> Result<StatusCode, AppError> {
+    if !auth.testing {
+        let id = queries::create_event(&state.cobalt_db, &data).await?;
+        tracing::info!(
+            "Key {} used to create event {}: '{}' for {}",
+            auth.key_id,
+            id,
+            data.title,
+            data.facility
+        );
+    } else {
+        tracing::debug!("Testing key {} used on create event endpoint", auth.key_id);
+    }
+    Ok(StatusCode::CREATED)
+}
 
-async fn edit_event() {}
+/// Update an existing event
+#[utoipa::path(
+    patch,
+    path = "/{id}",
+    tag = "events",
+    request_body = UpdateEvent,
+    responses(
+        (status = 200, description = "Event updated"),
+        (status = 400, description = "Malformed request"),
+        (status = 401, description = "Must be called with an API key"),
+        (status = 404, description = "No matching event found"),
+        (status = 405, description = "Must be called with PATCH"),
+        (status = 422, description = "Malformed request body"),
+        (status = 500, description = "Server error")
+    ),
+    params(
+        ("id" = i32, Path, description = "Event ID")
+    ),
+    security(
+        ("api_key" = [])
+    )
+)]
+async fn update_event(
+    Path(id): Path<i32>,
+    State(state): State<Arc<AppState>>,
+    auth: RequireAuth,
+    extract::Json(data): extract::Json<UpdateEvent>,
+) -> Result<StatusCode, AppError> {
+    let event = queries::get_event(&state.cobalt_db, id).await?;
+    let event = match event {
+        Some(e) => e,
+        None => {
+            return Err(AppError::NotFound("event not found"));
+        }
+    };
+    if !auth.testing {
+        queries::update_event(&state.cobalt_db, id, &data).await?;
+        tracing::info!("Key {} used to update event {}", auth.key_id, event.id);
+    } else {
+        tracing::debug!(
+            "Testing key {} called on event update endpoint",
+            auth.key_id
+        );
+    }
+    Ok(StatusCode::OK)
+}
 
-async fn delete_event() {}
+/// Delete an existing event
+#[utoipa::path(
+    delete,
+    path = "/{id}",
+    tag = "events",
+    responses(
+        (status = 204, description = "Event deleted"),
+        (status = 400, description = "Malformed request"),
+        (status = 401, description = "Must be called with an API key"),
+        (status = 404, description = "No matching event found"),
+        (status = 405, description = "Must be called with DELETE"),
+        (status = 422, description = "Malformed request body"),
+        (status = 500, description = "Server error")
+    ),
+    params(
+        ("id" = i32, Path, description = "Event ID")
+    ),
+    security(
+        ("api_key" = [])
+    )
+)]
+async fn delete_event(
+    Path(id): Path<i32>,
+    State(state): State<Arc<AppState>>,
+    auth: RequireAuth,
+) -> Result<StatusCode, AppError> {
+    let event = queries::get_event(&state.cobalt_db, id).await?;
+    let event = match event {
+        Some(e) => e,
+        None => {
+            return Err(AppError::NotFound("event not found"));
+        }
+    };
+    if !auth.testing {
+        queries::delete_event(&state.cobalt_db, id).await?;
+        tracing::info!(
+            "Key {} used to delete event {}: was '{}' for {}",
+            auth.key_id,
+            id,
+            event.title,
+            event.facility
+        );
+    } else {
+        tracing::debug!(
+            "Testing key {} called on event delete endpoint",
+            auth.key_id
+        );
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
