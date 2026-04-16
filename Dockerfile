@@ -11,14 +11,20 @@ RUN rm -rf src
 
 # 2. Build actual app
 COPY src ./src
+COPY .sqlx ./.sqlx
+RUN rm -f target/release/deps/mithril* target/release/mithril*
 RUN cargo build --release
 
 # ---- Runtime stage ----
-FROM alpine:3.23
+FROM debian:bookworm-slim
 WORKDIR /app
 EXPOSE 4000
+
+# RUN apt-get update &&\
+#     apt-get install -y libgcc-s1 &&\
+#     rm -rf /var/lib/apt/lists/*
 
 # Copy compiled binary
 COPY --from=builder /app/target/release/mithril /usr/local/bin/mithril
 
-CMD ["mithril"]
+ENTRYPOINT ["mithril"]
