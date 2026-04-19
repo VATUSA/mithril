@@ -1,7 +1,7 @@
 //! News routes.
 
 // It may be advantageous to limiting updates and deletes to the facility
-// that created them (with ZHQ overide), but that data isn't stored into
+// that created them (with ZHQ override), but that data isn't stored into
 // the underlying table.
 
 use crate::{

@@ -51,7 +51,7 @@ pub async fn auth_middleware(
 ///
 /// This extractor is suitable for endpoints that may be called
 /// anonymously but still want to inspect whether a valid API key
-/// was supplied, like for controling beahvior of returned data.
+/// was supplied, like for controlling behavior of returned data.
 ///
 /// This does not need to be included if no key-specific behavior
 /// needs to be implemented on a route; the base-level

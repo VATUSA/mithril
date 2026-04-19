@@ -1,7 +1,5 @@
 //! Events routes.
 
-// TODO limit updates and deletes to the facility that created them (with ZHQ overide).
-
 use crate::{
     db::Event,
     middleware::RequireAuth,

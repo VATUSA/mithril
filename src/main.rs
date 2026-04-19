@@ -30,7 +30,7 @@ mod shared;
 const API_DESCRIPTION: &str = r#"VATUSA API.
 
 This API is primarily for VATUSA ARTCCs to be able to interact with the VATUSA
-site programatically. Some routes do not require an API key that facilities have;
+site programmatically. Some routes do not require an API key that facilities have;
 these routes can be used by anyone. Some API keys may be granted to users for
 specific non-facility use.
 
@@ -110,7 +110,7 @@ impl Modify for SecurityAddon {
     }
 }
 
-/// Healthcheck endpoint
+/// Health-check endpoint
 #[utoipa::path(
     method(get, head),
     path = "/health",

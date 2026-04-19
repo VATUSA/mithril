@@ -1,3 +1,14 @@
 {
-  "words": ["sqlx", "vatusa", "dotenv", "utoipa", "thiserror"]
+  "words": [
+    "sqlx",
+    "vatusa",
+    "dotenv",
+    "utoipa",
+    "thiserror",
+    "atm",
+    "datm",
+    "chrono",
+    "ARTCCs",
+    "redoc"
+  ]
 }
