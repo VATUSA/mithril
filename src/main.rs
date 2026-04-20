@@ -92,6 +92,7 @@ async fn shutdown_signal() {
     tags(
         (name = "events", description = "Network events"),
         (name = "news", description = "Division and facility news"),
+        (name = "facility", description = "Division facility data"),
     )
 )]
 struct ApiDoc;
@@ -160,6 +161,7 @@ async fn main() -> Result<()> {
         .routes(routes!(openapi))
         .nest("/news", routes::news::router(app_state.clone()))
         .nest("/events", routes::events::router(app_state.clone()))
+        .nest("/facility", routes::facility::router(app_state.clone()))
         .fallback(routes::fallback)
         .split_for_parts();
 

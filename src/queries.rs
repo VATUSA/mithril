@@ -10,7 +10,7 @@ use crate::{
     shared::{AppError, HasFacility},
 };
 use chrono::Utc;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::MySqlPool;
 use utoipa::ToSchema;
 
@@ -230,5 +230,69 @@ pub async fn delete_event(db: &MySqlPool, id: i32) -> Result<(), AppError> {
 }
 
 // ---------------------------------------------------
-// ?
+// facilities
 // ---------------------------------------------------
+
+/// Generic information available for each facility.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct FacilityBrief {
+    pub id: String,
+    pub name: String,
+    pub url: String,
+    pub region: i32,
+    pub atm: u32,
+    pub datm: u32,
+    pub ta: u32,
+    pub ec: u32,
+    pub fe: u32,
+    pub wm: u32,
+}
+
+/// Get active facility information for the division.
+pub async fn get_active_facilities(db: &MySqlPool) -> Result<Vec<FacilityBrief>, AppError> {
+    let data = sqlx::query_as!(
+        FacilityBrief,
+        "SELECT id, name, url, region, atm, datm, ta, ec, fe, wm FROM facilities WHERE active = 1"
+    )
+    .fetch_all(db)
+    .await?;
+    Ok(data)
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct FacilityOverview {
+    facility: FacilityOverviewF,
+    stats: FacilityOverviewStats,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct FacilityOverviewF {
+    info: FacilityBrief,
+    roles: Vec<FacilityOverviewRole>,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct FacilityOverviewRole {
+    id: i64,
+    cid: i64,
+    facility: String,
+    role: String,
+    created_at: String,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct FacilityOverviewStats {
+    controllers: i32,
+    pending_transfers: i32, // TODO this might be named differently in the DB
+}
+
+/// Get the overview data for the facility.
+///
+/// More comprehensive than what's returned by the function & endpoint to
+/// get all of the division's facilities.
+pub async fn get_facility_full_info(
+    db: &MySqlPool,
+    id: &str,
+) -> Result<FacilityOverview, AppError> {
+    todo!()
+}
