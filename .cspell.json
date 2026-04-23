@@ -9,6 +9,8 @@
     "datm",
     "chrono",
     "ARTCCs",
-    "redoc"
+    "redoc",
+    "vatsim",
+    "artcc"
   ]
 }
