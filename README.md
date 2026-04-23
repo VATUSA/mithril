@@ -1,7 +1,7 @@
 # mithril
 
 ![lang](https://img.shields.io/badge/lang-rust-orange)
-![licensing](https://img.shields.io/badge/license-TBD-green)
+![licensing](https://img.shields.io/badge/license-MIT-green)
 ![status](https://img.shields.io/badge/project_status-in_dev-yellow)
 
 New VATUSA API for facilities and guests.
