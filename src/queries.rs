@@ -261,34 +261,13 @@ pub async fn get_active_facilities(db: &MySqlPool) -> Result<Vec<FacilityBrief>,
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct FacilityOverview {
-    facility: FacilityOverviewF,
-    stats: FacilityOverviewStats,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct FacilityOverviewF {
-    info: FacilityBrief,
-    roles: Vec<FacilityOverviewRole>,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct FacilityOverviewRole {
-    id: i64,
-    cid: i64,
-    facility: String,
-    role: String,
-    created_at: String,
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct FacilityOverviewStats {
-    controllers: i32,
-    pending_transfers: i32,
+    info: FacilityOverviewInfo,
+    roles: Vec<Role>,
 }
 
 // I still hate MySQL
-#[derive(Debug, ToSchema)]
-struct FacilityOverviewPartial {
+#[derive(Debug, Serialize, ToSchema)]
+pub struct FacilityOverviewInfo {
     id: Option<String>,
     name: Option<String>,
     url: Option<String>,
@@ -314,8 +293,8 @@ pub async fn get_facility_full_info(
     db: &MySqlPool,
     id: &str,
 ) -> Result<FacilityOverview, AppError> {
-    let facility_info = sqlx::query_as!(
-        FacilityOverviewPartial,
+    let info = sqlx::query_as!(
+        FacilityOverviewInfo,
         r#"
 SELECT
     f.id, f.name, f.url, f.hosted_email_domain, f.region, f.atm, f.datm, f.ta, f.ec, f.fe, f.wm, f.active as "active!: bool", f.ace,
@@ -325,10 +304,8 @@ FROM facilities f
 WHERE f.id = ? AND f.active = 1;"#,
         id
     ).fetch_one(db).await?;
-
     let roles = sqlx::query_as!(Role, r#"SELECT * FROM roles WHERE facility = ?"#, id)
         .fetch_all(db)
         .await?;
-
-    todo!()
+    Ok(FacilityOverview { info, roles })
 }

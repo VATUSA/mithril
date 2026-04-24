@@ -21,6 +21,18 @@ use utoipa::{
 use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_redoc::{Redoc, Servable};
 
+//
+// TODO
+//
+//  Need to consider how the "testing" flag will be included in responses.
+//  I don't want to put it into the body since that makes consumers make
+//  wrapping types. A header, perhaps?
+//
+//  Need to set up E2E tests. Need to come up with a testing environment
+//  specifically for that, outside of the standard unit tests. Will need
+//  a testing DB that's constructed from a static file.
+//
+
 mod db;
 mod middleware;
 mod queries;

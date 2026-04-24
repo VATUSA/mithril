@@ -48,10 +48,11 @@ async fn get_facilities(
     )
 )]
 async fn get_facility_info(
-    Path(id): Path<i32>,
+    Path(id): Path<String>,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<FacilityOverview>, AppError> {
-    todo!()
+    let info = queries::get_facility_full_info(&state.vatusa_db, &id).await?;
+    Ok(Json(info))
 }
 
 async fn get_roster() {
