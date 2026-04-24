@@ -37,7 +37,7 @@ async fn get_facilities(
     Ok(Json(facilities))
 }
 
-/// Holistic facility information.
+/// Full facility information.
 #[utoipa::path(
     get,
     path = "/{id}",

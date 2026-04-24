@@ -11,7 +11,7 @@
 #![allow(unused)]
 
 use crate::shared::AppError;
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use serde::Serialize;
 use sqlx::{FromRow, MySqlPool};
 use std::env;
@@ -357,7 +357,7 @@ pub struct Role {
     pub cid: u32,
     pub facility: String,
     pub role: String,
-    pub created_at: NaiveDateTime,
+    pub created_at: chrono::DateTime<Utc>,
 }
 
 /// **Table**: `solo_certs`

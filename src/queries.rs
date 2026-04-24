@@ -6,7 +6,7 @@
 #![allow(unused)]
 
 use crate::{
-    db::{ApiKey, Event, NewsPost},
+    db::{ApiKey, Event, NewsPost, Role},
     shared::{AppError, HasFacility},
 };
 use chrono::Utc;
@@ -283,7 +283,27 @@ pub struct FacilityOverviewRole {
 #[derive(Debug, Serialize, ToSchema)]
 pub struct FacilityOverviewStats {
     controllers: i32,
-    pending_transfers: i32, // TODO this might be named differently in the DB
+    pending_transfers: i32,
+}
+
+// I still hate MySQL
+#[derive(Debug, ToSchema)]
+struct FacilityOverviewPartial {
+    id: Option<String>,
+    name: Option<String>,
+    url: Option<String>,
+    hosted_email_domain: Option<String>,
+    region: Option<i32>,
+    atm: Option<u32>,
+    datm: Option<u32>,
+    ta: Option<u32>,
+    ec: Option<u32>,
+    fe: Option<u32>,
+    wm: Option<u32>,
+    ace: Option<i32>,
+    active: bool,
+    controllers: Option<i64>,
+    pending_transfers: Option<i64>,
 }
 
 /// Get the overview data for the facility.
@@ -294,5 +314,21 @@ pub async fn get_facility_full_info(
     db: &MySqlPool,
     id: &str,
 ) -> Result<FacilityOverview, AppError> {
+    let facility_info = sqlx::query_as!(
+        FacilityOverviewPartial,
+        r#"
+SELECT
+    f.id, f.name, f.url, f.hosted_email_domain, f.region, f.atm, f.datm, f.ta, f.ec, f.fe, f.wm, f.active as "active!: bool", f.ace,
+    (SELECT COUNT(*) FROM controllers c WHERE c.facility = f.id) AS controllers,
+    (SELECT COUNT(*) FROM transfers t WHERE t.to = f.id AND t.status = 0) AS pending_transfers
+FROM facilities f
+WHERE f.id = ? AND f.active = 1;"#,
+        id
+    ).fetch_one(db).await?;
+
+    let roles = sqlx::query_as!(Role, r#"SELECT * FROM roles WHERE facility = ?"#, id)
+        .fetch_all(db)
+        .await?;
+
     todo!()
 }

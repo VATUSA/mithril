@@ -1,0 +1,164 @@
+{
+  "db_name": "MySQL",
+  "query": "\nSELECT\n    f.id, f.name, f.url, f.hosted_email_domain, f.region, f.atm, f.datm, f.ta, f.ec, f.fe, f.wm, f.active as \"active!: bool\", f.ace,\n    (SELECT COUNT(*) FROM controllers c WHERE c.facility = f.id) AS controllers,\n    (SELECT COUNT(*) FROM transfers t WHERE t.to = f.id AND t.status = 0) AS pending_transfers\nFROM facilities f\nWHERE f.id = ? AND f.active = 1;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": {
+          "type": "String",
+          "flags": "PRIMARY_KEY | UNIQUE_KEY | NO_DEFAULT_VALUE",
+          "max_size": 12
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NO_DEFAULT_VALUE",
+          "max_size": 1020
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "url",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NO_DEFAULT_VALUE",
+          "max_size": 1020
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "hosted_email_domain",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "max_size": 1020
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "region",
+        "type_info": {
+          "type": "Long",
+          "flags": "NO_DEFAULT_VALUE",
+          "max_size": 11
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "atm",
+        "type_info": {
+          "type": "Long",
+          "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "datm",
+        "type_info": {
+          "type": "Long",
+          "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "ta",
+        "type_info": {
+          "type": "Long",
+          "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "ec",
+        "type_info": {
+          "type": "Long",
+          "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "fe",
+        "type_info": {
+          "type": "Long",
+          "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "wm",
+        "type_info": {
+          "type": "Long",
+          "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "max_size": 10
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "active!: bool",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "max_size": 11
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "ace",
+        "type_info": {
+          "type": "Long",
+          "flags": "NO_DEFAULT_VALUE",
+          "max_size": 11
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "controllers",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "BINARY",
+          "max_size": 21
+        }
+      },
+      {
+        "ordinal": 14,
+        "name": "pending_transfers",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "BINARY",
+          "max_size": 21
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "7684784d98bb97fa3a32a6f11ff9fbc95b50dd547f408a241c30c4d785485707"
+}
