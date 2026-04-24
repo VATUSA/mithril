@@ -2,7 +2,7 @@
 name = "mithril"
 version = "0.1.0"
 edition = "2024"
-authors = []
+authors = ["VATUSA Web Team"]
 description = "VATUSA HTTP API"
 readme = "README.md"
 homepage = "https://github.com/vatusa/mithril"
