@@ -140,7 +140,7 @@ async fn openapi() -> Json<utoipa::openapi::OpenApi> {
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli = Cli::parse();
-    let _ = dotenv::dotenv();
+    let _ = dotenvy::dotenv();
 
     let subscriber = tracing_subscriber::FmtSubscriber::builder()
         .with_max_level(tracing::Level::DEBUG)
