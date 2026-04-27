@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:9
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: combined
+    ports:
+      - 3306:3306
+    volumes:
+      - mysql_data:/var/lib/mysql
+  mithril:
+    image: localhost/mithril:latest
+    container_name: mithril
+    restart: unless-stopped
+    environment:
+      DATABASE_URL_VATUSA: mysql://root:password@mysql/combined?ssl-mode=disabled
+      DATABASE_URL_COBALT: mysql://root:password@mysql/combined?ssl-mode=disabled
+    ports:
+      - 4000:4000
+
+volumes:
+  mysql_data:
