@@ -1,12 +1,35 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+For how this repo relates to the other VATUSA projects, see the workspace `CLAUDE.md` one directory up.
 
 ## Project Overview
 
 Mithril is a new VATUSA HTTP API written in Rust. It provides programmatic access for ARTCCs (air traffic control centers) and facilities to interact with the VATUSA system. The API uses X-API-Key header authentication and supports both public endpoints and facility-specific operations.
 
 The project is designed to replace/extend the existing legacy API by providing a modern Rust-based backend built on Axum (async web framework).
+
+## Role in the larger VATUSA setup
+
+Mithril is the intended **"v3" API** — the long-term successor to the legacy Laravel API
+(`api`) and a sibling to the Go `cobalt` backend. Beyond being just another backend, it
+has a specific job during the platform migration:
+
+- **API-contract continuity during migration.** Mithril acts as a stable facade that holds
+  the external API contract steady while the website (`current_site`) and the underlying
+  data model are migrated underneath it. Consumers code against mithril's v3 contract; the
+  storage and ownership of data can move without breaking them.
+- **Straddling old and new data models.** This is why mithril connects to **two databases**
+  at once (see Code Architecture below): `vatusa_db` (the legacy "vatusa-old" schema) and
+  `cobalt_db` (the new backend schema). It can read legacy data and write/serve new-model
+  data through one consistent surface, letting tables migrate from old to new incrementally
+  rather than in a big-bang cutover.
+- **Where it sits.** Legacy pair (`current_site` + `current_api`) → newer backends
+  (`cobalt`, mithril) → modern frontend (`webapps`). As migration proceeds, responsibility
+  shifts from the legacy Laravel stack toward mithril/cobalt. When changing mithril's API
+  contract, treat it as a published interface and check downstream consumers.
+
+See the workspace `CLAUDE.md` for the full project map and the migration strategy notes.
 
 ## Build & Development Commands
 
