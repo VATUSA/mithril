@@ -16,7 +16,7 @@ Mithril is the intended **"v3" API** — the long-term successor to the legacy L
 has a specific job during the platform migration:
 
 - **API-contract continuity during migration.** Mithril acts as a stable facade that holds
-  the external API contract steady while the website (`current_site`) and the underlying
+  the external API contract steady while the website (`site`) and the underlying
   data model are migrated underneath it. Consumers code against mithril's v3 contract; the
   storage and ownership of data can move without breaking them.
 - **Straddling old and new data models.** This is why mithril connects to **two databases**
@@ -24,7 +24,7 @@ has a specific job during the platform migration:
   `cobalt_db` (the new backend schema). It can read legacy data and write/serve new-model
   data through one consistent surface, letting tables migrate from old to new incrementally
   rather than in a big-bang cutover.
-- **Where it sits.** Legacy pair (`current_site` + `current_api`) → newer backends
+- **Where it sits.** Legacy pair (`site` + `api`) → newer backends
   (`cobalt`, mithril) → modern frontend (`webapps`). As migration proceeds, responsibility
   shifts from the legacy Laravel stack toward mithril/cobalt. When changing mithril's API
   contract, treat it as a published interface and check downstream consumers.
