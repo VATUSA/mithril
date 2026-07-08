@@ -7,9 +7,16 @@
         "ordinal": 0,
         "name": "id",
         "type_info": {
-          "type": "Long",
-          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
-          "max_size": 10
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_api_key",
+            "name": "id"
+          }
         }
       },
       {
@@ -17,8 +24,15 @@
         "name": "code",
         "type_info": {
           "type": "VarString",
-          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "flags": "NOT_NULL | UNIQUE_KEY | NO_DEFAULT_VALUE",
+          "collation": 255,
           "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_api_key",
+            "name": "code"
+          }
         }
       },
       {
@@ -26,8 +40,15 @@
         "name": "testing: bool",
         "type_info": {
           "type": "Tiny",
-          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
-          "max_size": 4
+          "flags": "NOT_NULL",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_api_key",
+            "name": "testing"
+          }
         }
       },
       {
@@ -35,8 +56,15 @@
         "name": "facility",
         "type_info": {
           "type": "VarString",
-          "flags": "",
-          "max_size": 12
+          "flags": "MULTIPLE_KEY",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_api_key",
+            "name": "facility"
+          }
         }
       },
       {
@@ -45,7 +73,14 @@
         "type_info": {
           "type": "Blob",
           "flags": "BLOB",
+          "collation": 255,
           "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_api_key",
+            "name": "notes"
+          }
         }
       },
       {
@@ -54,7 +89,14 @@
         "type_info": {
           "type": "LongLong",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_api_key",
+            "name": "created_at"
+          }
         }
       },
       {
@@ -63,7 +105,14 @@
         "type_info": {
           "type": "LongLong",
           "flags": "",
+          "collation": 63,
           "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_api_key",
+            "name": "updated_at"
+          }
         }
       },
       {
@@ -72,7 +121,14 @@
         "type_info": {
           "type": "LongLong",
           "flags": "",
+          "collation": 63,
           "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_api_key",
+            "name": "deleted_at"
+          }
         }
       }
     ],

@@ -9,7 +9,14 @@
         "type_info": {
           "type": "LongLong",
           "flags": "NOT_NULL | PRIMARY_KEY | AUTO_INCREMENT",
+          "collation": 63,
           "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "id"
+          }
         }
       },
       {
@@ -18,7 +25,14 @@
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
           "max_size": 960
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "title"
+          }
         }
       },
       {
@@ -27,7 +41,14 @@
         "type_info": {
           "type": "Blob",
           "flags": "NOT_NULL | BLOB | NO_DEFAULT_VALUE",
+          "collation": 255,
           "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "body"
+          }
         }
       },
       {
@@ -36,7 +57,14 @@
         "type_info": {
           "type": "Blob",
           "flags": "NOT_NULL | BLOB | NO_DEFAULT_VALUE",
+          "collation": 255,
           "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "banner_image_url"
+          }
         }
       },
       {
@@ -45,7 +73,14 @@
         "type_info": {
           "type": "VarString",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
           "max_size": 16
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "facility"
+          }
         }
       },
       {
@@ -54,7 +89,14 @@
         "type_info": {
           "type": "LongLong",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "start_time"
+          }
         }
       },
       {
@@ -63,7 +105,14 @@
         "type_info": {
           "type": "LongLong",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "end_time"
+          }
         }
       },
       {
@@ -72,7 +121,14 @@
         "type_info": {
           "type": "LongLong",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "created_at"
+          }
         }
       },
       {
@@ -81,7 +137,14 @@
         "type_info": {
           "type": "Long",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "created_by"
+          }
         }
       },
       {
@@ -90,7 +153,14 @@
         "type_info": {
           "type": "LongLong",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "updated_at"
+          }
         }
       },
       {
@@ -99,7 +169,62 @@
         "type_info": {
           "type": "Long",
           "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "updated_by"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "review_status",
+        "type_info": {
+          "type": "VarString",
+          "flags": "",
+          "collation": 255,
+          "max_size": 160
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "review_status"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "reviewed_by",
+        "type_info": {
+          "type": "Long",
+          "flags": "",
+          "collation": 63,
+          "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "reviewed_by"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "reviewed_on",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.event",
+            "name": "reviewed_on"
+          }
         }
       }
     ],
@@ -117,7 +242,10 @@
       false,
       false,
       false,
-      false
+      false,
+      true,
+      true,
+      true
     ]
   },
   "hash": "16fa2f4dd6a72e837ab647e9d6a6152005ca885959a4d72b781e3e61569a0233"

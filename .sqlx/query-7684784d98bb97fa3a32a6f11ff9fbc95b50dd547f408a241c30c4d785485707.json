@@ -9,7 +9,14 @@
         "type_info": {
           "type": "String",
           "flags": "PRIMARY_KEY | UNIQUE_KEY | NO_DEFAULT_VALUE",
+          "collation": 255,
           "max_size": 12
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "id"
+          }
         }
       },
       {
@@ -18,7 +25,14 @@
         "type_info": {
           "type": "VarString",
           "flags": "NO_DEFAULT_VALUE",
+          "collation": 255,
           "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "name"
+          }
         }
       },
       {
@@ -27,7 +41,14 @@
         "type_info": {
           "type": "VarString",
           "flags": "NO_DEFAULT_VALUE",
+          "collation": 255,
           "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "url"
+          }
         }
       },
       {
@@ -36,7 +57,14 @@
         "type_info": {
           "type": "VarString",
           "flags": "",
+          "collation": 255,
           "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "hosted_email_domain"
+          }
         }
       },
       {
@@ -45,7 +73,14 @@
         "type_info": {
           "type": "Long",
           "flags": "NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "region"
+          }
         }
       },
       {
@@ -54,7 +89,14 @@
         "type_info": {
           "type": "Long",
           "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 10
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "atm"
+          }
         }
       },
       {
@@ -63,7 +105,14 @@
         "type_info": {
           "type": "Long",
           "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 10
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "datm"
+          }
         }
       },
       {
@@ -72,7 +121,14 @@
         "type_info": {
           "type": "Long",
           "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 10
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "ta"
+          }
         }
       },
       {
@@ -81,7 +137,14 @@
         "type_info": {
           "type": "Long",
           "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 10
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "ec"
+          }
         }
       },
       {
@@ -90,7 +153,14 @@
         "type_info": {
           "type": "Long",
           "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 10
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "fe"
+          }
         }
       },
       {
@@ -99,7 +169,14 @@
         "type_info": {
           "type": "Long",
           "flags": "UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 10
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "wm"
+          }
         }
       },
       {
@@ -108,7 +185,14 @@
         "type_info": {
           "type": "Long",
           "flags": "",
+          "collation": 63,
           "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "active"
+          }
         }
       },
       {
@@ -117,7 +201,14 @@
         "type_info": {
           "type": "Long",
           "flags": "NO_DEFAULT_VALUE",
+          "collation": 63,
           "max_size": 11
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.facilities",
+            "name": "ace"
+          }
         }
       },
       {
@@ -126,8 +217,10 @@
         "type_info": {
           "type": "LongLong",
           "flags": "BINARY",
+          "collation": 63,
           "max_size": 21
-        }
+        },
+        "origin": "Expression"
       },
       {
         "ordinal": 14,
@@ -135,8 +228,10 @@
         "type_info": {
           "type": "LongLong",
           "flags": "BINARY",
+          "collation": 63,
           "max_size": 21
-        }
+        },
+        "origin": "Expression"
       }
     ],
     "parameters": {

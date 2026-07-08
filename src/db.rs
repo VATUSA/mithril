@@ -79,6 +79,9 @@ pub struct Event {
     pub created_by: i32,
     pub updated_at: i64,
     pub updated_by: i32,
+    pub review_status: Option<String>,
+    pub reviewed_by: Option<i32>,
+    pub reviewed_on: Option<i64>,
 }
 
 /// **Table**: `academy_exam_assignments`
