@@ -1,0 +1,150 @@
+{
+  "db_name": "MySQL",
+  "query": "SELECT id, table_name, row_pk, operation,\n        old_value as `old_value: serde_json::Value`,\n        new_value as `new_value: serde_json::Value`,\n        created_at, processed_at\n        FROM change_log WHERE processed_at IS NULL\n        ORDER BY id ASC LIMIT ?",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | UNSIGNED | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.change_log",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "table_name",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 128
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.change_log",
+            "name": "table_name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "row_pk",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | UNSIGNED | NO_DEFAULT_VALUE",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.change_log",
+            "name": "row_pk"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "operation",
+        "type_info": {
+          "type": "String",
+          "flags": "NOT_NULL | ENUM | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 24
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.change_log",
+            "name": "operation"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "old_value: serde_json::Value",
+        "type_info": {
+          "type": "Json",
+          "flags": "BLOB | BINARY",
+          "collation": 63,
+          "max_size": 4294967295
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.change_log",
+            "name": "old_value"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "new_value: serde_json::Value",
+        "type_info": {
+          "type": "Json",
+          "flags": "BLOB | BINARY",
+          "collation": 63,
+          "max_size": 4294967295
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.change_log",
+            "name": "new_value"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "created_at",
+        "type_info": {
+          "type": "Timestamp",
+          "flags": "NOT_NULL | BINARY | TIMESTAMP",
+          "collation": 63,
+          "max_size": 19
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.change_log",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "processed_at",
+        "type_info": {
+          "type": "Timestamp",
+          "flags": "MULTIPLE_KEY | BINARY",
+          "collation": 63,
+          "max_size": 19
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.change_log",
+            "name": "processed_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true
+    ]
+  },
+  "hash": "6fb272a37beeb49ecdcf79a407273ca56c52db1ac9891e565c39bd6d9c4c5e3c"
+}

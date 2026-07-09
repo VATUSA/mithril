@@ -33,6 +33,7 @@ use utoipa_redoc::{Redoc, Servable};
 //  a testing DB that's constructed from a static file.
 //
 
+mod change_poller;
 mod db;
 mod middleware;
 mod queries;
@@ -175,7 +176,10 @@ async fn main() -> Result<()> {
     let _ = dotenvy::dotenv();
 
     let subscriber = tracing_subscriber::FmtSubscriber::builder()
-        .with_max_level(tracing::Level::DEBUG)
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,mithril=debug")),
+        )
         .finish();
     tracing::subscriber::set_global_default(subscriber).context("Unable to configure logging")?;
 
@@ -214,6 +218,11 @@ async fn main() -> Result<()> {
             )),
     );
 
+    let poller_handle = tokio::spawn(change_poller::run(
+        app_state.vatusa_db.clone(),
+        shutdown_signal(),
+    ));
+
     let host_and_port = format!("{}:{}", cli.host, cli.port);
     tracing::info!("Listening on http://{host_and_port}/");
     let listener = tokio::net::TcpListener::bind(&host_and_port)
@@ -223,6 +232,8 @@ async fn main() -> Result<()> {
         .with_graceful_shutdown(shutdown_signal())
         .await
         .context("Could not serve the app")?;
+
+    let _ = poller_handle.await;
 
     Ok(())
 }

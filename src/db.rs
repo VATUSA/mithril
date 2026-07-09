@@ -493,3 +493,19 @@ pub struct Visit {
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
 }
+
+/// A single logged change to `controllers` or `visits`, written by DB
+/// triggers. See `sql/001_change_log.sql`.
+///
+/// **Table**: `change_log`
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct ChangeLogEntry {
+    pub id: u64,
+    pub table_name: String,
+    pub row_pk: u64,
+    pub operation: String, // 'INSERT' | 'UPDATE' | 'DELETE'
+    pub old_value: Option<serde_json::Value>,
+    pub new_value: Option<serde_json::Value>,
+    pub created_at: chrono::DateTime<Utc>,
+    pub processed_at: Option<chrono::DateTime<Utc>>,
+}

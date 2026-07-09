@@ -6,7 +6,7 @@
 #![allow(unused)]
 
 use crate::{
-    db::{ApiKey, Event, NewsPost, Role},
+    db::{ApiKey, ChangeLogEntry, Event, NewsPost, Role},
     shared::{AppError, HasFacility},
 };
 use chrono::Utc;
@@ -308,4 +308,53 @@ WHERE f.id = ? AND f.active = 1;"#,
         .fetch_all(db)
         .await?;
     Ok(FacilityOverview { info, roles })
+}
+
+// ---------------------------------------------------
+// change_log
+// ---------------------------------------------------
+
+/// Get unprocessed `change_log` rows, oldest first.
+pub async fn get_unprocessed_changes(
+    db: &MySqlPool,
+    limit: i64,
+) -> Result<Vec<ChangeLogEntry>, AppError> {
+    let rows = sqlx::query_as!(
+        ChangeLogEntry,
+        r#"SELECT id, table_name, row_pk, operation,
+        old_value as `old_value: serde_json::Value`,
+        new_value as `new_value: serde_json::Value`,
+        created_at, processed_at
+        FROM change_log WHERE processed_at IS NULL
+        ORDER BY id ASC LIMIT ?"#,
+        limit
+    )
+    .fetch_all(db)
+    .await?;
+    Ok(rows)
+}
+
+/// Mark a single `change_log` row as processed (sets `processed_at = NOW()`).
+pub async fn mark_change_processed(db: &MySqlPool, id: u64) -> Result<(), AppError> {
+    sqlx::query!("UPDATE change_log SET processed_at = NOW() WHERE id = ?", id)
+        .execute(db)
+        .await?;
+    Ok(())
+}
+
+/// Delete processed `change_log` rows older than `retention_days`.
+///
+/// Returns the number of rows deleted.
+pub async fn delete_processed_changes(
+    db: &MySqlPool,
+    retention_days: u32,
+) -> Result<u64, AppError> {
+    let result = sqlx::query!(
+        r#"DELETE FROM change_log WHERE processed_at IS NOT NULL
+        AND processed_at < NOW() - INTERVAL ? DAY"#,
+        retention_days
+    )
+    .execute(db)
+    .await?;
+    Ok(result.rows_affected())
 }
