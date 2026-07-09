@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT id, table_name, row_pk, operation,\n        old_value as `old_value: serde_json::Value`,\n        new_value as `new_value: serde_json::Value`,\n        created_at, processed_at\n        FROM change_log WHERE processed_at IS NULL\n        ORDER BY id ASC LIMIT ?",
+  "query": "SELECT id, table_name, row_pk, operation,\n        old_value as `old_value: serde_json::Value`,\n        new_value as `new_value: serde_json::Value`,\n        created_at, processed_at\n        FROM roster_notifications WHERE processed_at IS NULL\n        ORDER BY id ASC LIMIT ?",
   "describe": {
     "columns": [
       {
@@ -14,7 +14,7 @@
         },
         "origin": {
           "Table": {
-            "table": "combined.change_log",
+            "table": "combined.roster_notifications",
             "name": "id"
           }
         }
@@ -30,7 +30,7 @@
         },
         "origin": {
           "Table": {
-            "table": "combined.change_log",
+            "table": "combined.roster_notifications",
             "name": "table_name"
           }
         }
@@ -46,7 +46,7 @@
         },
         "origin": {
           "Table": {
-            "table": "combined.change_log",
+            "table": "combined.roster_notifications",
             "name": "row_pk"
           }
         }
@@ -62,7 +62,7 @@
         },
         "origin": {
           "Table": {
-            "table": "combined.change_log",
+            "table": "combined.roster_notifications",
             "name": "operation"
           }
         }
@@ -78,7 +78,7 @@
         },
         "origin": {
           "Table": {
-            "table": "combined.change_log",
+            "table": "combined.roster_notifications",
             "name": "old_value"
           }
         }
@@ -94,7 +94,7 @@
         },
         "origin": {
           "Table": {
-            "table": "combined.change_log",
+            "table": "combined.roster_notifications",
             "name": "new_value"
           }
         }
@@ -110,7 +110,7 @@
         },
         "origin": {
           "Table": {
-            "table": "combined.change_log",
+            "table": "combined.roster_notifications",
             "name": "created_at"
           }
         }
@@ -126,7 +126,7 @@
         },
         "origin": {
           "Table": {
-            "table": "combined.change_log",
+            "table": "combined.roster_notifications",
             "name": "processed_at"
           }
         }
@@ -146,5 +146,5 @@
       true
     ]
   },
-  "hash": "6fb272a37beeb49ecdcf79a407273ca56c52db1ac9891e565c39bd6d9c4c5e3c"
+  "hash": "78f21d9aea887184e0c9653eebdafb6fd8c0a6d85473334b5e1155757a6fcb78"
 }

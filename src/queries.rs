@@ -311,10 +311,10 @@ WHERE f.id = ? AND f.active = 1;"#,
 }
 
 // ---------------------------------------------------
-// change_log
+// roster_notifications
 // ---------------------------------------------------
 
-/// Get unprocessed `change_log` rows, oldest first.
+/// Get unprocessed `roster_notifications` rows, oldest first.
 pub async fn get_unprocessed_changes(
     db: &MySqlPool,
     limit: i64,
@@ -325,7 +325,7 @@ pub async fn get_unprocessed_changes(
         old_value as `old_value: serde_json::Value`,
         new_value as `new_value: serde_json::Value`,
         created_at, processed_at
-        FROM change_log WHERE processed_at IS NULL
+        FROM roster_notifications WHERE processed_at IS NULL
         ORDER BY id ASC LIMIT ?"#,
         limit
     )
@@ -334,15 +334,18 @@ pub async fn get_unprocessed_changes(
     Ok(rows)
 }
 
-/// Mark a single `change_log` row as processed (sets `processed_at = NOW()`).
+/// Mark a single `roster_notifications` row as processed (sets `processed_at = NOW()`).
 pub async fn mark_change_processed(db: &MySqlPool, id: u64) -> Result<(), AppError> {
-    sqlx::query!("UPDATE change_log SET processed_at = NOW() WHERE id = ?", id)
-        .execute(db)
-        .await?;
+    sqlx::query!(
+        "UPDATE roster_notifications SET processed_at = NOW() WHERE id = ?",
+        id
+    )
+    .execute(db)
+    .await?;
     Ok(())
 }
 
-/// Delete processed `change_log` rows older than `retention_days`.
+/// Delete processed `roster_notifications` rows older than `retention_days`.
 ///
 /// Returns the number of rows deleted.
 pub async fn delete_processed_changes(
@@ -350,7 +353,7 @@ pub async fn delete_processed_changes(
     retention_days: u32,
 ) -> Result<u64, AppError> {
     let result = sqlx::query!(
-        r#"DELETE FROM change_log WHERE processed_at IS NOT NULL
+        r#"DELETE FROM roster_notifications WHERE processed_at IS NOT NULL
         AND processed_at < NOW() - INTERVAL ? DAY"#,
         retention_days
     )

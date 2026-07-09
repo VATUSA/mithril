@@ -495,9 +495,9 @@ pub struct Visit {
 }
 
 /// A single logged change to `controllers` or `visits`, written by DB
-/// triggers. See `sql/001_change_log.sql`.
+/// triggers. See `sql/001_roster_notifications.sql`.
 ///
-/// **Table**: `change_log`
+/// **Table**: `roster_notifications`
 #[derive(Debug, Clone, FromRow, Serialize)]
 pub struct ChangeLogEntry {
     pub id: u64,

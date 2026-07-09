@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE roster_notifications SET processed_at = NOW() WHERE id = ?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "f74a9e4c7f9485b32ede6f44a018d4b21a4f2e01fb94805e0c86d2413294c772"
+}

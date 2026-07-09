@@ -1,18 +1,18 @@
-//! Background poller for the `change_log` table.
+//! Background poller for the `roster_notifications` table.
 //!
 //! Validation-phase only: detected changes are printed to stdout rather than
 //! delivered anywhere (e.g. a future webhook consumer). See
-//! `sql/001_change_log.sql` for the triggers that populate this table.
+//! `sql/001_roster_notifications.sql` for the triggers that populate this table.
 
 use crate::queries::{delete_processed_changes, get_unprocessed_changes, mark_change_processed};
 use sqlx::MySqlPool;
 use std::time::Duration;
 use tokio::time::interval;
 
-/// How long a processed `change_log` row is kept before it's eligible for cleanup.
+/// How long a processed `roster_notifications` row is kept before it's eligible for cleanup.
 const RETENTION_DAYS: u32 = 7;
 
-/// Poll `change_log` every 15 seconds until `shutdown` resolves, printing each
+/// Poll `roster_notifications` every 15 seconds until `shutdown` resolves, printing each
 /// unprocessed row and marking it processed. Separately, once an hour, deletes
 /// processed rows older than [`RETENTION_DAYS`] so the table doesn't grow
 /// indefinitely.
@@ -40,12 +40,12 @@ pub async fn run(db: MySqlPool, shutdown: impl std::future::Future<Output = ()>)
     }
 }
 
-/// Check the `change_log` DB table for unprocessed rows.
+/// Check the `roster_notifications` DB table for unprocessed rows.
 async fn poll_once(db: &MySqlPool) -> Result<(), crate::shared::AppError> {
     let changes = get_unprocessed_changes(db, 100).await?;
     for change in changes {
         tracing::info!(
-            "[change_log #{}] {} {} pk={} old={} new={}",
+            "[roster_notifications #{}] {} {} pk={} old={} new={}",
             change.id,
             change.table_name,
             change.operation,
@@ -66,7 +66,7 @@ async fn poll_once(db: &MySqlPool) -> Result<(), crate::shared::AppError> {
     Ok(())
 }
 
-/// Delete processed `change_log` rows past their retention window.
+/// Delete processed `roster_notifications` rows past their retention window.
 async fn cleanup_once(db: &MySqlPool) -> Result<(), crate::shared::AppError> {
     let deleted = delete_processed_changes(db, RETENTION_DAYS).await?;
     if deleted > 0 {
