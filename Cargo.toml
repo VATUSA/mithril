@@ -19,7 +19,7 @@ dotenvy = "0.15.7"
 http = "1.4.2"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
-sqlx = { version = "0.9.0", features = ["runtime-tokio", "mysql", "macros", "chrono"] }
+sqlx = { version = "0.9.0", features = ["runtime-tokio", "mysql", "macros", "chrono", "mysql-rsa"] }
 thiserror = "2.0.18"
 tokio = { version = "1.52.3", features = ["full"] }
 toml = "1.0.7"
