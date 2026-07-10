@@ -123,6 +123,19 @@ impl Modify for SecurityAddon {
     }
 }
 
+/// Prefixes every documented path with `/v3` so Redoc's sidebar/operation
+/// headings match the public URL, even though the ingress strips that
+/// segment before requests reach this app. Must run on the fully-merged
+/// `OpenApi` doc (after `split_for_parts`), since path items are only
+/// added to it as each router's `routes!()` is composed.
+fn prefix_paths(openapi: &mut utoipa::openapi::OpenApi) {
+    let paths = std::mem::take(&mut openapi.paths.paths);
+    openapi.paths.paths = paths
+        .into_iter()
+        .map(|(path, item)| (format!("/v3{path}"), item))
+        .collect();
+}
+
 /// Health-check endpoint
 #[utoipa::path(
     method(get, head),
@@ -146,8 +159,15 @@ async fn health() -> &'static str {
     )
 )]
 async fn openapi() -> Json<utoipa::openapi::OpenApi> {
-    Json(ApiDoc::openapi())
+    Json(
+        OPENAPI_DOC
+            .get()
+            .expect("openapi doc set during startup")
+            .clone(),
+    )
 }
+
+static OPENAPI_DOC: std::sync::OnceLock<utoipa::openapi::OpenApi> = std::sync::OnceLock::new();
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -167,7 +187,7 @@ async fn main() -> Result<()> {
     tracing::debug!("Connected");
 
     tracing::debug!("Setting up app");
-    let (app, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+    let (app, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .with_state(app_state.clone())
         .routes(routes!(health))
         .routes(routes!(openapi))
@@ -176,6 +196,10 @@ async fn main() -> Result<()> {
         .nest("/facility", routes::facility::router(app_state.clone()))
         .fallback(routes::fallback)
         .split_for_parts();
+    prefix_paths(&mut api);
+    if OPENAPI_DOC.set(api.clone()).is_err() {
+        panic!("openapi doc set exactly once at startup");
+    }
 
     let app = app.merge(Redoc::with_url("/", api)).layer(
         ServiceBuilder::new()
