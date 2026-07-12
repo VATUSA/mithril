@@ -1,0 +1,150 @@
+{
+  "db_name": "MySQL",
+  "query": "SELECT id, facility, url, secret, notes, created_at, updated_at, deleted_at\n        FROM v3_webhook WHERE facility = ? AND deleted_at IS NULL",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | PRIMARY_KEY | AUTO_INCREMENT",
+          "collation": 63,
+          "max_size": 20
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_webhook",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "facility",
+        "type_info": {
+          "type": "VarString",
+          "flags": "MULTIPLE_KEY",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_webhook",
+            "name": "facility"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "url",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 8192
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_webhook",
+            "name": "url"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "secret",
+        "type_info": {
+          "type": "VarString",
+          "flags": "NOT_NULL | NO_DEFAULT_VALUE",
+          "collation": 255,
+          "max_size": 1020
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_webhook",
+            "name": "secret"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "notes",
+        "type_info": {
+          "type": "Blob",
+          "flags": "BLOB",
+          "collation": 255,
+          "max_size": 262140
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_webhook",
+            "name": "notes"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "created_at",
+        "type_info": {
+          "type": "Timestamp",
+          "flags": "NOT_NULL | BINARY | TIMESTAMP",
+          "collation": 63,
+          "max_size": 19
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_webhook",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "updated_at",
+        "type_info": {
+          "type": "Timestamp",
+          "flags": "BINARY",
+          "collation": 63,
+          "max_size": 19
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_webhook",
+            "name": "updated_at"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "deleted_at",
+        "type_info": {
+          "type": "Timestamp",
+          "flags": "BINARY",
+          "collation": 63,
+          "max_size": 19
+        },
+        "origin": {
+          "Table": {
+            "table": "combined.v3_webhook",
+            "name": "deleted_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true
+    ]
+  },
+  "hash": "5b75cde716322e524ab1cd5b04ba7b009acc0a9d9280f40f61d2e7b2da733dee"
+}

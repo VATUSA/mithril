@@ -207,9 +207,9 @@ Example pattern (from news.rs, events.rs):
 if !auth.testing {
     // Perform actual database write
     queries::create_news_post(...).await?;
-    tracing::info!("Key {} created post", auth.key_id);
+    tracing::info!("key {} created post", auth.key_id);
 } else {
-    tracing::debug!("Testing key {} on endpoint", auth.key_id);
+    tracing::debug!("testing key {} on endpoint", auth.key_id);
 }
 
 ```
@@ -229,4 +229,3 @@ if !auth.testing {
 - **Session support**: tower-sessions available (not currently used)
 - **Logging**: tracing-subscriber with DEBUG level by default
 - **JSON errors**: Custom error responses prevent internal details leakage
-

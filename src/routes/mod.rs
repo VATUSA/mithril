@@ -9,6 +9,7 @@ pub mod support;
 pub mod tmu;
 pub mod training;
 pub mod user;
+pub mod webhooks;
 
 /// Generic route fallback.
 pub async fn fallback() -> crate::shared::AppError {

@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "INSERT INTO v3_webhook (facility, url, secret) VALUES (?, ?, ?)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "108d59134d2af074dd716f10c0121b85314967c8f7dff68cb34d95022e6b7711"
+}

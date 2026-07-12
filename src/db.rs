@@ -53,6 +53,24 @@ pub struct ApiKey {
     pub deleted_at: Option<i64>,
 }
 
+/// A registered outbound webhook for a facility.
+///
+/// Net-new to the database, lives in the Cobalt DB.
+///
+/// **Table**: `v3_webhook`
+#[derive(Debug, FromRow, Serialize, ToSchema)]
+pub struct Webhook {
+    pub id: i64,
+    pub facility: Option<String>,
+    pub url: String,
+    #[serde(skip)]
+    pub secret: String,
+    pub notes: Option<String>,
+    pub created_at: chrono::DateTime<Utc>,
+    pub updated_at: Option<chrono::DateTime<Utc>>,
+    pub deleted_at: Option<chrono::DateTime<Utc>>,
+}
+
 /// News posts, Cobalt DB.
 ///
 /// **Table**: `news_post`

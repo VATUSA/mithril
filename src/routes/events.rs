@@ -91,14 +91,14 @@ async fn create_event(
         let facility = determine_facility(&auth, &data)?;
         let id = queries::create_event(&state.cobalt_db, &data, &facility).await?;
         tracing::info!(
-            "Key {} used to create event {}: '{}' for {}",
+            "key {} used to create event {}: '{}' for {}",
             auth.key_id,
             id,
             data.title,
             facility
         );
     } else {
-        tracing::debug!("Testing key {} used on create event endpoint", auth.key_id);
+        tracing::debug!("testing key {} used on create event endpoint", auth.key_id);
     }
     Ok(StatusCode::CREATED)
 }
@@ -151,17 +151,17 @@ async fn update_event(
         let facility = determine_facility(&auth, &data)?;
         if event.facility != facility && facility != "ZHQ" {
             tracing::info!(
-                "Key {} tried to update event for {}",
+                "key {} tried to update event for {}",
                 auth.key_id,
                 event.facility
             );
             return Err(AppError::InsufficientPermissions);
         }
         queries::update_event(&state.cobalt_db, id, &data, &facility).await?;
-        tracing::info!("Key {} used to update event {}", auth.key_id, event.id);
+        tracing::info!("key {} used to update event {}", auth.key_id, event.id);
     } else {
         tracing::debug!(
-            "Testing key {} called on event update endpoint",
+            "testing key {} called on event update endpoint",
             auth.key_id
         );
     }
@@ -210,7 +210,7 @@ async fn delete_event(
         let facility = auth.facility.as_deref().unwrap_or_default();
         if event.facility != facility && facility != "ZHQ" {
             tracing::info!(
-                "Key {} tried to delete event for {}",
+                "key {} tried to delete event for {}",
                 auth.key_id,
                 event.facility
             );
@@ -218,7 +218,7 @@ async fn delete_event(
         }
         queries::delete_event(&state.cobalt_db, id).await?;
         tracing::info!(
-            "Key {} used to delete event {}: was '{}' for {}",
+            "key {} used to delete event {}: was '{}' for {}",
             auth.key_id,
             id,
             event.title,
@@ -226,7 +226,7 @@ async fn delete_event(
         );
     } else {
         tracing::debug!(
-            "Testing key {} called on event delete endpoint",
+            "testing key {} called on event delete endpoint",
             auth.key_id
         );
     }

@@ -74,7 +74,7 @@ async fn shutdown_signal() {
         signal::ctrl_c()
             .await
             .expect("failed to install Ctrl+C handler");
-        tracing::warn!("Got terminate signal");
+        tracing::warn!("got terminate signal");
     };
 
     #[cfg(unix)]
@@ -83,7 +83,7 @@ async fn shutdown_signal() {
             .expect("failed to install signal handler")
             .recv()
             .await;
-        tracing::warn!("Got terminate signal");
+        tracing::warn!("got terminate signal");
     };
 
     #[cfg(not(unix))]
@@ -107,6 +107,7 @@ async fn shutdown_signal() {
         (name = "events", description = "Network events"),
         (name = "news", description = "Division and facility news"),
         (name = "facility", description = "Division facility data"),
+        (name = "webhooks", description = "Outbound webhook registration"),
     )
 )]
 struct ApiDoc;
@@ -184,14 +185,14 @@ async fn main() -> Result<()> {
         .finish();
     tracing::subscriber::set_global_default(subscriber).context("Unable to configure logging")?;
 
-    tracing::debug!("Connecting to databases");
+    tracing::debug!("connecting to databases ...");
     let app_state = Arc::new(shared::AppState {
         vatusa_db: connect_vatusa().await.context("vatusa db")?,
         cobalt_db: connect_cobalt().await.context("cobalt db")?,
     });
-    tracing::debug!("Connected");
+    tracing::debug!("connected");
 
-    tracing::debug!("Setting up app");
+    tracing::debug!("setting up app ...");
     let (app, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .with_state(app_state.clone())
         .routes(routes!(health))
@@ -199,6 +200,7 @@ async fn main() -> Result<()> {
         .nest("/news", routes::news::router(app_state.clone()))
         .nest("/events", routes::events::router(app_state.clone()))
         .nest("/facility", routes::facility::router(app_state.clone()))
+        .nest("/webhooks", routes::webhooks::router(app_state.clone()))
         .fallback(routes::fallback)
         .split_for_parts();
     prefix_paths(&mut api);
@@ -218,23 +220,26 @@ async fn main() -> Result<()> {
                 auth_middleware,
             )),
     );
+    tracing::debug!("set up");
 
     let mut poller_handle = None;
     // temporarily locked behind an env var
     if let Ok(e) = env::var("MITHRIL_ROSTER_POLL")
-        && e == "TRUE"
+        && e.to_lowercase() == "true"
     {
-        tracing::info!("Enabling roster poll task");
+        tracing::info!("enabling roster poll task");
         poller_handle = Some(tokio::spawn(change_poller::run(
             app_state.vatusa_db.clone(),
+            app_state.cobalt_db.clone(),
             shutdown_signal(),
         )));
+        tracing::debug!("roster poll task created");
     } else {
-        tracing::debug!("Not enabling roller poll task");
+        tracing::debug!("not enabling roster poll task");
     }
 
     let host_and_port = format!("{}:{}", cli.host, cli.port);
-    tracing::info!("Listening on http://{host_and_port}/");
+    tracing::info!("listening on http://{host_and_port}/");
     let listener = tokio::net::TcpListener::bind(&host_and_port)
         .await
         .context("Could not bind the HTTP listener")?;
