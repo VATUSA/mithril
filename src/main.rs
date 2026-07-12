@@ -10,7 +10,7 @@ use crate::{
 use anyhow::{Context, Result};
 use axum::Json;
 use clap::Parser;
-use std::{sync::Arc, time::Duration};
+use std::{env, sync::Arc, time::Duration};
 use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::timeout::TimeoutLayer;
@@ -56,7 +56,8 @@ an API key is included in the request.
 This documentation is generated from the code and should always be up to date.
 "#;
 
-/// VATUSA API.
+/// VATUSA API v3.
+
 #[derive(Debug, Parser)]
 #[command(version, about, long_about=None)]
 struct Cli {
@@ -218,10 +219,19 @@ async fn main() -> Result<()> {
             )),
     );
 
-    let poller_handle = tokio::spawn(change_poller::run(
-        app_state.vatusa_db.clone(),
-        shutdown_signal(),
-    ));
+    let mut poller_handle = None;
+    // temporarily locked behind an env var
+    if let Ok(e) = env::var("MITHRIL_ROSTER_POLL")
+        && e == "TRUE"
+    {
+        tracing::info!("Enabling roster poll task");
+        poller_handle = Some(tokio::spawn(change_poller::run(
+            app_state.vatusa_db.clone(),
+            shutdown_signal(),
+        )));
+    } else {
+        tracing::debug!("Not enabling roller poll task");
+    }
 
     let host_and_port = format!("{}:{}", cli.host, cli.port);
     tracing::info!("Listening on http://{host_and_port}/");
@@ -233,7 +243,9 @@ async fn main() -> Result<()> {
         .await
         .context("Could not serve the app")?;
 
-    let _ = poller_handle.await;
+    if let Some(h) = poller_handle {
+        let _ = h.await;
+    }
 
     Ok(())
 }

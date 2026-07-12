@@ -31,12 +31,8 @@ BEGIN
     END IF;
 END$$
 
-DELIMITER ;
-
 -- visits: log every insert/update/delete unconditionally.
 -- Note: DELETE triggers only have access to OLD, never NEW.
-DELIMITER $$
-
 CREATE TRIGGER trg_visits_insert
 AFTER INSERT ON visits
 FOR EACH ROW

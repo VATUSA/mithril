@@ -33,6 +33,10 @@ This app follows all [Clippy](https://doc.rust-lang.org/clippy/) lints on _Night
 
 TBD
 
+### Environment variables
+
+- `MITHRIL_ROSTER_POLL`: when set to `TRUE`, enable the roster change poll task
+
 ## Deploying
 
 TBD
