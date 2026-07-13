@@ -16,7 +16,7 @@ RUN rm -f target/release/deps/mithril* target/release/mithril*
 RUN cargo build --release
 
 # ---- Runtime stage ----
-FROM debian:bookworm-slim AS app
+FROM debian:trixie-slim AS app
 WORKDIR /app
 EXPOSE 4000
 
