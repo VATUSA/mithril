@@ -1,10 +1,13 @@
 //! Database setup & models.
 //!
 //! Unlike many applications, this program is connecting to a database
-//! that already exists and is already populated with data. Because of
-//! that, you won't find things here like migrations or `CREATE TABLE`
-//! statements. Incremental migrations will be driven by Cobalt, then
-//! used in the frontend and in this API.
+//! that already exists and is already populated with data. Most incremental
+//! migrations will be driven by Cobalt, then used in the frontend and in
+//! this API.
+//!
+//! The exception to that is the SQL files in /sql/ as these are specifically
+//! for tables needed by this application, to be applied on top of the tables
+//! from the existing VATUSA DB and what Cobalt adds.
 //!
 //! This module contains the DB connection functions and DB models.
 
@@ -48,6 +51,24 @@ pub struct ApiKey {
     pub created_at: i64,
     pub updated_at: Option<i64>,
     pub deleted_at: Option<i64>,
+}
+
+/// A registered outbound webhook for a facility.
+///
+/// Net-new to the database, lives in the Cobalt DB.
+///
+/// **Table**: `v3_webhook`
+#[derive(Debug, FromRow, Serialize, ToSchema)]
+pub struct Webhook {
+    pub id: i64,
+    pub facility: Option<String>,
+    pub url: String,
+    #[serde(skip)]
+    pub secret: String,
+    pub notes: Option<String>,
+    pub created_at: chrono::DateTime<Utc>,
+    pub updated_at: Option<chrono::DateTime<Utc>>,
+    pub deleted_at: Option<chrono::DateTime<Utc>>,
 }
 
 /// News posts, Cobalt DB.
@@ -492,4 +513,20 @@ pub struct Visit {
     pub facility: String,
     pub created_at: Option<NaiveDateTime>,
     pub updated_at: Option<NaiveDateTime>,
+}
+
+/// A single logged change to `controllers` or `visits`, written by DB
+/// triggers. See `sql/001_roster_notifications.sql`.
+///
+/// **Table**: `roster_notifications`
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct ChangeLogEntry {
+    pub id: u64,
+    pub table_name: String,
+    pub row_pk: u64,
+    pub operation: String, // 'INSERT' | 'UPDATE' | 'DELETE'
+    pub old_value: Option<serde_json::Value>,
+    pub new_value: Option<serde_json::Value>,
+    pub created_at: chrono::DateTime<Utc>,
+    pub processed_at: Option<chrono::DateTime<Utc>>,
 }

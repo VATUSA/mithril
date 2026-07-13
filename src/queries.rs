@@ -6,7 +6,7 @@
 #![allow(unused)]
 
 use crate::{
-    db::{ApiKey, Event, NewsPost, Role},
+    db::{ApiKey, ChangeLogEntry, Event, NewsPost, Role, Webhook},
     shared::{AppError, HasFacility},
 };
 use chrono::Utc;
@@ -59,8 +59,11 @@ pub async fn get_news_post(db: &MySqlPool, id: i32) -> Result<Option<NewsPost>, 
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateNewsPost {
+    /// News posting title.
     pub title: String,
+    /// News posting body content.
     pub body: String,
+    /// News posting author.
     pub author_cid: i32,
 }
 
@@ -81,7 +84,9 @@ pub async fn create_news_post(db: &MySqlPool, data: &CreateNewsPost) -> Result<u
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateNewsPost {
+    /// New title.
     pub title: String,
+    /// New body content.
     pub body: String,
 }
 
@@ -133,14 +138,20 @@ pub async fn get_event(db: &MySqlPool, id: i32) -> Result<Option<Event>, AppErro
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateEvent {
+    /// Event title
     pub title: String,
+    /// Event body content
     pub body: String,
+    /// Event banner image
     pub banner_image_url: String,
     /// This field is for division overwrites; facilities should omit
-    /// this in their request
+    /// this in their request.
     pub facility: Option<String>,
+    /// Event start time, UTC
     pub start_time: i64,
+    /// Event end time, UTC
     pub end_time: i64,
+    /// Event author, CIC, leader, etc.
     pub created_by: i32,
 }
 
@@ -179,14 +190,20 @@ pub async fn create_event(
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateEvent {
+    /// Event title
     pub title: String,
+    /// Event body content
     pub body: String,
+    /// Event banner image
     pub banner_image_url: String,
     /// This field is for division overwrites; facilities should omit
-    /// this in their request
+    /// this in their request.
     pub facility: Option<String>,
+    /// Event start time, UTC
     pub start_time: i64,
+    /// Event end time, UTC
     pub end_time: i64,
+    /// Who owns this change
     pub updated_by: i32,
 }
 
@@ -308,4 +325,111 @@ WHERE f.id = ? AND f.active = 1;"#,
         .fetch_all(db)
         .await?;
     Ok(FacilityOverview { info, roles })
+}
+
+// ---------------------------------------------------
+// v3_webhook
+// ---------------------------------------------------
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct CreateWebhook {
+    /// The URL at which you will receive HTTP requests with data. Must be HTTPS.
+    pub url: String,
+}
+
+impl HasFacility for &CreateWebhook {
+    fn facility(&self) -> Option<String> {
+        None
+    }
+}
+
+/// Create a new `v3_webhook` row. Returns the new row's id.
+///
+/// `db` must be the Cobalt DB pool.
+pub async fn create_webhook(
+    db: &MySqlPool,
+    facility: &str,
+    url: &str,
+    secret: &str,
+) -> Result<u64, AppError> {
+    let id = sqlx::query!(
+        "INSERT INTO v3_webhook (facility, url, secret) VALUES (?, ?, ?)",
+        facility,
+        url,
+        secret,
+    )
+    .execute(db)
+    .await?
+    .last_insert_id();
+    Ok(id)
+}
+
+/// Get all non-deleted `v3_webhook` rows for a facility.
+///
+/// `db` must be the Cobalt DB pool.
+pub async fn get_webhooks_for_facility(
+    db: &MySqlPool,
+    facility: &str,
+) -> Result<Vec<Webhook>, AppError> {
+    let rows = sqlx::query_as!(
+        Webhook,
+        r#"SELECT id, facility, url, secret, notes, created_at, updated_at, deleted_at
+        FROM v3_webhook WHERE facility = ? AND deleted_at IS NULL"#,
+        facility
+    )
+    .fetch_all(db)
+    .await?;
+    Ok(rows)
+}
+
+// ---------------------------------------------------
+// roster_notifications
+// ---------------------------------------------------
+
+/// Get unprocessed `roster_notifications` rows, oldest first.
+pub async fn get_unprocessed_changes(
+    db: &MySqlPool,
+    limit: i64,
+) -> Result<Vec<ChangeLogEntry>, AppError> {
+    let rows = sqlx::query_as!(
+        ChangeLogEntry,
+        r#"SELECT id, table_name, row_pk, operation,
+        old_value as `old_value: serde_json::Value`,
+        new_value as `new_value: serde_json::Value`,
+        created_at, processed_at
+        FROM roster_notifications WHERE processed_at IS NULL
+        ORDER BY id ASC LIMIT ?"#,
+        limit
+    )
+    .fetch_all(db)
+    .await?;
+    Ok(rows)
+}
+
+/// Mark a single `roster_notifications` row as processed (sets `processed_at = NOW()`).
+pub async fn mark_change_processed(db: &MySqlPool, id: u64) -> Result<(), AppError> {
+    sqlx::query!(
+        "UPDATE roster_notifications SET processed_at = NOW() WHERE id = ?",
+        id
+    )
+    .execute(db)
+    .await?;
+    Ok(())
+}
+
+/// Delete processed `roster_notifications` rows older than `retention_days`.
+///
+/// Returns the number of rows deleted.
+pub async fn delete_processed_changes(
+    db: &MySqlPool,
+    retention_days: u32,
+) -> Result<u64, AppError> {
+    let result = sqlx::query!(
+        r#"DELETE FROM roster_notifications WHERE processed_at IS NOT NULL
+        AND processed_at < NOW() - INTERVAL ? DAY"#,
+        retention_days
+    )
+    .execute(db)
+    .await?;
+    Ok(result.rows_affected())
 }

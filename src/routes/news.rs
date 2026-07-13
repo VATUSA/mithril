@@ -90,14 +90,14 @@ async fn create_news(
     if !auth.testing {
         let id = queries::create_news_post(&state.cobalt_db, &data).await?;
         tracing::info!(
-            "Key {} used to create news post {}: '{}'",
+            "key {} used to create news post {}: '{}'",
             auth.key_id,
             id,
             data.title
         );
     } else {
         tracing::debug!(
-            "Testing key {} used on create news post endpoint",
+            "testing key {} used on create news post endpoint",
             auth.key_id
         )
     }
@@ -144,9 +144,9 @@ async fn update_news(
     };
     if !auth.testing {
         queries::update_news_post(&state.cobalt_db, id, &data).await?;
-        tracing::info!("Key {} used to update news post {}", auth.key_id, news.id);
+        tracing::info!("key {} used to update news post {}", auth.key_id, news.id);
     } else {
-        tracing::debug!("Testing key {} called on news update endpoint", auth.key_id);
+        tracing::debug!("testing key {} called on news update endpoint", auth.key_id);
     }
     Ok(StatusCode::OK)
 }
@@ -187,13 +187,13 @@ async fn delete_news(
     if !auth.testing {
         queries::delete_news_post(&state.cobalt_db, id).await?;
         tracing::info!(
-            "Key {} used to delete news post {}, title was '{}'",
+            "key {} used to delete news post {}, title was '{}'",
             auth.key_id,
             id,
             news.title,
         );
     } else {
-        tracing::debug!("Testing key {} called on news delete endpoint", auth.key_id);
+        tracing::debug!("testing key {} called on news delete endpoint", auth.key_id);
     }
     Ok(StatusCode::NO_CONTENT)
 }

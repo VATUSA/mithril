@@ -10,7 +10,7 @@ use crate::{
 use anyhow::{Context, Result};
 use axum::Json;
 use clap::Parser;
-use std::{sync::Arc, time::Duration};
+use std::{env, sync::Arc, time::Duration};
 use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::timeout::TimeoutLayer;
@@ -33,6 +33,7 @@ use utoipa_redoc::{Redoc, Servable};
 //  a testing DB that's constructed from a static file.
 //
 
+mod change_poller;
 mod db;
 mod middleware;
 mod queries;
@@ -55,7 +56,8 @@ an API key is included in the request.
 This documentation is generated from the code and should always be up to date.
 "#;
 
-/// VATUSA API.
+/// VATUSA API v3.
+
 #[derive(Debug, Parser)]
 #[command(version, about, long_about=None)]
 struct Cli {
@@ -72,7 +74,7 @@ async fn shutdown_signal() {
         signal::ctrl_c()
             .await
             .expect("failed to install Ctrl+C handler");
-        tracing::warn!("Got terminate signal");
+        tracing::warn!("got terminate signal");
     };
 
     #[cfg(unix)]
@@ -81,7 +83,7 @@ async fn shutdown_signal() {
             .expect("failed to install signal handler")
             .recv()
             .await;
-        tracing::warn!("Got terminate signal");
+        tracing::warn!("got terminate signal");
     };
 
     #[cfg(not(unix))]
@@ -105,6 +107,7 @@ async fn shutdown_signal() {
         (name = "events", description = "Network events"),
         (name = "news", description = "Division and facility news"),
         (name = "facility", description = "Division facility data"),
+        (name = "webhooks", description = "Outbound webhook registration"),
     )
 )]
 struct ApiDoc;
@@ -175,18 +178,21 @@ async fn main() -> Result<()> {
     let _ = dotenvy::dotenv();
 
     let subscriber = tracing_subscriber::FmtSubscriber::builder()
-        .with_max_level(tracing::Level::DEBUG)
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info,mithril=debug")),
+        )
         .finish();
     tracing::subscriber::set_global_default(subscriber).context("Unable to configure logging")?;
 
-    tracing::debug!("Connecting to databases");
+    tracing::debug!("connecting to databases ...");
     let app_state = Arc::new(shared::AppState {
         vatusa_db: connect_vatusa().await.context("vatusa db")?,
         cobalt_db: connect_cobalt().await.context("cobalt db")?,
     });
-    tracing::debug!("Connected");
+    tracing::debug!("connected");
 
-    tracing::debug!("Setting up app");
+    tracing::debug!("setting up app ...");
     let (app, mut api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
         .with_state(app_state.clone())
         .routes(routes!(health))
@@ -194,6 +200,7 @@ async fn main() -> Result<()> {
         .nest("/news", routes::news::router(app_state.clone()))
         .nest("/events", routes::events::router(app_state.clone()))
         .nest("/facility", routes::facility::router(app_state.clone()))
+        .nest("/webhooks", routes::webhooks::router(app_state.clone()))
         .fallback(routes::fallback)
         .split_for_parts();
     prefix_paths(&mut api);
@@ -213,9 +220,26 @@ async fn main() -> Result<()> {
                 auth_middleware,
             )),
     );
+    tracing::debug!("set up");
+
+    let mut poller_handle = None;
+    // temporarily locked behind an env var
+    if let Ok(e) = env::var("MITHRIL_ROSTER_POLL")
+        && e.to_lowercase() == "true"
+    {
+        tracing::info!("enabling roster poll task");
+        poller_handle = Some(tokio::spawn(change_poller::run(
+            app_state.vatusa_db.clone(),
+            app_state.cobalt_db.clone(),
+            shutdown_signal(),
+        )));
+        tracing::debug!("roster poll task created");
+    } else {
+        tracing::debug!("not enabling roster poll task");
+    }
 
     let host_and_port = format!("{}:{}", cli.host, cli.port);
-    tracing::info!("Listening on http://{host_and_port}/");
+    tracing::info!("listening on http://{host_and_port}/");
     let listener = tokio::net::TcpListener::bind(&host_and_port)
         .await
         .context("Could not bind the HTTP listener")?;
@@ -223,6 +247,10 @@ async fn main() -> Result<()> {
         .with_graceful_shutdown(shutdown_signal())
         .await
         .context("Could not serve the app")?;
+
+    if let Some(h) = poller_handle {
+        let _ = h.await;
+    }
 
     Ok(())
 }

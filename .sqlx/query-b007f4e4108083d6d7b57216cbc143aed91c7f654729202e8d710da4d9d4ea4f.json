@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM roster_notifications WHERE processed_at IS NOT NULL\n        AND processed_at < NOW() - INTERVAL ? DAY",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "b007f4e4108083d6d7b57216cbc143aed91c7f654729202e8d710da4d9d4ea4f"
+}
