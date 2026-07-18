@@ -124,13 +124,16 @@ fn target_facilities(change: &ChangeLogEntry) -> HashSet<String> {
 /// and otherwise ignored.
 async fn deliver(http: &reqwest::Client, webhook: &Webhook, change: &ChangeLogEntry) {
     let payload = serde_json::json!({
-        "id": change.id,
-        "table_name": change.table_name,
-        "operation": change.operation,
-        "row_pk": change.row_pk,
-        "old_value": change.old_value,
-        "new_value": change.new_value,
-        "created_at": change.created_at,
+        "type": "roster_change",
+        "data": {
+            "id": change.id,
+            "table_name": change.table_name,
+            "operation": change.operation,
+            "row_pk": change.row_pk,
+            "old_value": change.old_value,
+            "new_value": change.new_value,
+            "created_at": change.created_at,
+        },
     });
     let body = match serde_json::to_vec(&payload) {
         Ok(body) => body,
