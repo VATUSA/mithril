@@ -2,3 +2,5 @@ target
 .github
 *.md
 .env
+.git
+.jj
