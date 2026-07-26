@@ -1,0 +1,39 @@
+name: Validate
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+env:
+  SQLX_OFFLINE: "true"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+
+      - name: Install nightly toolchain (clippy)
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo fmt --check
+        run: cargo fmt --check
+
+      - name: cargo build
+        run: cargo b
+
+      - name: cargo clippy (nightly)
+        run: cargo +nightly clippy --all-targets -- -D warnings
+
+      - name: cargo test
+        run: cargo t
