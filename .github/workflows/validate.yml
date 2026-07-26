@@ -27,7 +27,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: cargo fmt --check
-        run: cargo fmt --check
+        run: cargo +stable fmt --check
 
       - name: cargo build
         run: cargo b
