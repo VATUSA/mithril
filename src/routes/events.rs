@@ -28,7 +28,8 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     path = "/",
     tag = "events",
     responses(
-        (status = 200, description = "Events", body = [Event])
+        (status = 200, description = "Events", body = [Event]),
+        (status = 500, description = "Server error")
     )
 )]
 async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event>>, AppError> {
@@ -43,7 +44,8 @@ async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event
     tag = "events",
     responses(
         (status = 200, description = "Event", body = Event),
-        (status = 404, description = "No matching event found")
+        (status = 404, description = "No matching event found"),
+        (status = 500, description = "Server error")
     ),
     params(
         ("id" = i32, Path, description = "Event ID")
