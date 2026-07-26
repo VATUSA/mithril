@@ -76,6 +76,7 @@ async fn get_single_news(
         (status = 201, description = "News post created"),
         (status = 400, description = "Malformed request"),
         (status = 401, description = "Must be called with an API key"),
+        (status = 403, description = "Author CID not in your facility"),
         (status = 405, description = "Must be called with POST"),
         (status = 422, description = "Malformed request body"),
         (status = 500, description = "Server error")
@@ -135,6 +136,7 @@ async fn create_news(
         (status = 200, description = "News post updated"),
         (status = 400, description = "Malformed request"),
         (status = 401, description = "Must be called with an API key"),
+        (status = 403, description = "Author CID not in your facility"),
         (status = 404, description = "No matching news post found"),
         (status = 405, description = "Must be called with PATCH"),
         (status = 422, description = "Malformed request body"),
@@ -197,6 +199,7 @@ async fn update_news(
         (status = 204, description = "News post deleted"),
         (status = 400, description = "Malformed request"),
         (status = 401, description = "Must be called with an API key"),
+        (status = 403, description = "Author CID not in your facility"),
         (status = 404, description = "No matching news post found"),
         (status = 405, description = "Must be called with DELETE"),
         (status = 422, description = "Malformed request body"),
