@@ -87,8 +87,8 @@ async fn create_event(
     auth: RequireAuth,
     extract::Json(data): extract::Json<CreateEvent>,
 ) -> Result<StatusCode, AppError> {
+    let facility = determine_facility(&auth, &data)?;
     if !auth.testing {
-        let facility = determine_facility(&auth, &data)?;
         let id = queries::create_event(&state.cobalt_db, &data, &facility).await?;
         tracing::info!(
             "key {} used to create event {}: '{}' for {}",
@@ -147,16 +147,16 @@ async fn update_event(
             return Err(AppError::NotFound("event not found"));
         }
     };
+    let facility = determine_facility(&auth, &data)?;
+    if event.facility != facility && facility != "ZHQ" {
+        tracing::info!(
+            "key {} tried to update event for {}",
+            auth.key_id,
+            event.facility
+        );
+        return Err(AppError::InsufficientPermissions);
+    }
     if !auth.testing {
-        let facility = determine_facility(&auth, &data)?;
-        if event.facility != facility && facility != "ZHQ" {
-            tracing::info!(
-                "key {} tried to update event for {}",
-                auth.key_id,
-                event.facility
-            );
-            return Err(AppError::InsufficientPermissions);
-        }
         queries::update_event(&state.cobalt_db, id, &data, &facility).await?;
         tracing::info!("key {} used to update event {}", auth.key_id, event.id);
     } else {
@@ -206,16 +206,16 @@ async fn delete_event(
             return Err(AppError::NotFound("event not found"));
         }
     };
+    let facility = auth.facility.as_deref().unwrap_or_default();
+    if event.facility != facility && facility != "ZHQ" {
+        tracing::info!(
+            "key {} tried to delete event for {}",
+            auth.key_id,
+            event.facility
+        );
+        return Err(AppError::InsufficientPermissions);
+    }
     if !auth.testing {
-        let facility = auth.facility.as_deref().unwrap_or_default();
-        if event.facility != facility && facility != "ZHQ" {
-            tracing::info!(
-                "key {} tried to delete event for {}",
-                auth.key_id,
-                event.facility
-            );
-            return Err(AppError::InsufficientPermissions);
-        }
         queries::delete_event(&state.cobalt_db, id).await?;
         tracing::info!(
             "key {} used to delete event {}: was '{}' for {}",
