@@ -1,14 +1,13 @@
 //! Shared data and utilities.
 
+use crate::middleware::RequireAuth;
 use axum::{
     Json,
     response::{IntoResponse, Response},
 };
 use http::StatusCode;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::MySqlPool;
-
-use crate::middleware::RequireAuth;
 
 /// Application state available to route functions.
 pub struct AppState {
@@ -151,5 +150,18 @@ pub fn determine_facility(auth: &RequireAuth, data: impl HasFacility) -> Result<
             .unwrap_or_else(|| String::from("ZHQ"))),
         Some(facility) => Ok(String::from(facility)),
         None => Err(AppError::ApiKeyRequired),
+    }
+}
+
+/// Custom `String` type for endpoint payloads.
+pub fn non_empty_string<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let s = String::deserialize(deserializer)?;
+    if s.is_empty() {
+        Err(serde::de::Error::custom("must not be empty"))
+    } else {
+        Ok(s)
     }
 }

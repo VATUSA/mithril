@@ -60,8 +60,10 @@ pub async fn get_news_post(db: &MySqlPool, id: i32) -> Result<Option<NewsPost>, 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateNewsPost {
     /// News posting title.
+    #[serde(deserialize_with = "crate::shared::non_empty_string")]
     pub title: String,
     /// News posting body content.
+    #[serde(deserialize_with = "crate::shared::non_empty_string")]
     pub body: String,
     /// News posting author.
     pub author_cid: i32,
@@ -139,10 +141,13 @@ pub async fn get_event(db: &MySqlPool, id: i32) -> Result<Option<Event>, AppErro
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateEvent {
     /// Event title
+    #[serde(deserialize_with = "crate::shared::non_empty_string")]
     pub title: String,
     /// Event body content
+    #[serde(deserialize_with = "crate::shared::non_empty_string")]
     pub body: String,
     /// Event banner image
+    #[serde(deserialize_with = "crate::shared::non_empty_string")]
     pub banner_image_url: String,
     /// This field is for division overwrites; facilities should omit
     /// this in their request.
@@ -191,10 +196,13 @@ pub async fn create_event(
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct UpdateEvent {
     /// Event title
+    #[serde(deserialize_with = "crate::shared::non_empty_string")]
     pub title: String,
     /// Event body content
+    #[serde(deserialize_with = "crate::shared::non_empty_string")]
     pub body: String,
     /// Event banner image
+    #[serde(deserialize_with = "crate::shared::non_empty_string")]
     pub banner_image_url: String,
     /// This field is for division overwrites; facilities should omit
     /// this in their request.
@@ -432,4 +440,19 @@ pub async fn delete_processed_changes(
     .execute(db)
     .await?;
     Ok(result.rows_affected())
+}
+
+// ---------------------------------------------------
+// Utilities
+// ---------------------------------------------------
+
+/// Check if a CID is in a facility. Used for validating sufficient ownership of
+/// news posts, etc. where there isn't a facility column but is a CID column.
+pub async fn cid_in_facility(db: &MySqlPool, cid: i32, facility: &str) -> Result<bool, AppError> {
+    let on_roster: i64 = sqlx::query_scalar!(r#"SELECT EXISTS(
+        SELECT 1 FROM (
+            SELECT facility FROM controllers WHERE cid=? UNION ALL SELECT facility FROM visits WHERE cid=?
+        ) AS combined WHERE facility=?)
+    AS on_roster"#, cid, cid, facility).fetch_one(db).await?;
+    Ok(on_roster != 0)
 }

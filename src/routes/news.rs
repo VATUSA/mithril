@@ -32,7 +32,8 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     path = "/",
     tag = "news",
     responses(
-        (status = 200, description = "News", body = [NewsPost])
+        (status = 200, description = "News", body = [NewsPost]),
+        (status = 500, description = "Server error")
     )
 )]
 async fn get_news(State(state): State<Arc<AppState>>) -> Result<Json<Vec<NewsPost>>, AppError> {
@@ -47,7 +48,8 @@ async fn get_news(State(state): State<Arc<AppState>>) -> Result<Json<Vec<NewsPos
     tag = "news",
     responses(
         (status = 200, description = "News post", body = NewsPost),
-        (status = 404, description = "No matching news post found")
+        (status = 404, description = "No matching news post found"),
+        (status = 500, description = "Server error")
     ),
     params(
         ("id" = i32, Path, description = "News post ID")
@@ -87,12 +89,31 @@ async fn create_news(
     auth: RequireAuth,
     extract::Json(data): extract::Json<CreateNewsPost>,
 ) -> Result<StatusCode, AppError> {
+    // validate data.author_cid in key's facility
+    let facility = auth
+        .facility
+        .as_deref()
+        .ok_or(AppError::InsufficientPermissions)?;
+    if facility != "ZHQ" {
+        let author_on_roster =
+            queries::cid_in_facility(&state.vatusa_db, data.author_cid, facility).await?;
+        if !author_on_roster {
+            tracing::warn!(
+                "key {} tried to create a news post for {} in another facility",
+                auth.key_id,
+                data.author_cid
+            );
+            return Err(AppError::InsufficientPermissions);
+        }
+    }
+    // create
     if !auth.testing {
         let id = queries::create_news_post(&state.cobalt_db, &data).await?;
         tracing::info!(
-            "key {} used to create news post {}: '{}'",
+            "key {} used to create news post {} by {}: '{}'",
             auth.key_id,
             id,
+            data.author_cid,
             data.title
         );
     } else {
@@ -103,9 +124,6 @@ async fn create_news(
     }
     Ok(StatusCode::CREATED)
 }
-
-// TODO It'd be nice if the caller didn't have to specify all
-// the fields, but rather just the fields they want to change.
 
 /// Update an existing news posting
 #[utoipa::path(
@@ -135,6 +153,7 @@ async fn update_news(
     auth: RequireAuth,
     extract::Json(data): extract::Json<UpdateNewsPost>,
 ) -> Result<StatusCode, AppError> {
+    // ensure news post exists
     let news = queries::get_news_post(&state.cobalt_db, id).await?;
     let news = match news {
         Some(n) => n,
@@ -142,6 +161,24 @@ async fn update_news(
             return Err(AppError::NotFound("news post not found"));
         }
     };
+    // validate data.author_cid in key's facility
+    let facility = auth
+        .facility
+        .as_deref()
+        .ok_or(AppError::InsufficientPermissions)?;
+    if facility != "ZHQ" {
+        let author_on_roster =
+            queries::cid_in_facility(&state.vatusa_db, news.author_cid, facility).await?;
+        if !author_on_roster {
+            tracing::warn!(
+                "key {} tried to update news post {} in another facility",
+                auth.key_id,
+                news.id,
+            );
+            return Err(AppError::InsufficientPermissions);
+        }
+    }
+    // update
     if !auth.testing {
         queries::update_news_post(&state.cobalt_db, id, &data).await?;
         tracing::info!("key {} used to update news post {}", auth.key_id, news.id);
@@ -177,6 +214,7 @@ async fn delete_news(
     State(state): State<Arc<AppState>>,
     auth: RequireAuth,
 ) -> Result<StatusCode, AppError> {
+    // ensure news post exists
     let news = queries::get_news_post(&state.cobalt_db, id).await?;
     let news = match news {
         Some(n) => n,
@@ -184,6 +222,24 @@ async fn delete_news(
             return Err(AppError::NotFound("news post not found"));
         }
     };
+    // validate data.author_cid in key's facility
+    let facility = auth
+        .facility
+        .as_deref()
+        .ok_or(AppError::InsufficientPermissions)?;
+    if facility != "ZHQ" {
+        let author_on_roster =
+            queries::cid_in_facility(&state.vatusa_db, news.author_cid, facility).await?;
+        if !author_on_roster {
+            tracing::warn!(
+                "key {} tried to delete news post {} in another facility",
+                auth.key_id,
+                news.id,
+            );
+            return Err(AppError::InsufficientPermissions);
+        }
+    }
+    // delete
     if !auth.testing {
         queries::delete_news_post(&state.cobalt_db, id).await?;
         tracing::info!(

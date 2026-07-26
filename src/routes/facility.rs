@@ -27,7 +27,8 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     path = "/",
     tag = "facility",
     responses(
-        (status = 200, description = "Facilities", body = [FacilityBrief])
+        (status = 200, description = "Facilities", body = [FacilityBrief]),
+        (status = 500, description = "Server error")
     )
 )]
 async fn get_facilities(
@@ -44,7 +45,8 @@ async fn get_facilities(
     tag = "facility",
     responses(
         (status = 200, description = "Facility data", body = FacilityOverview),
-        (status = 404, description = "Facility not found")
+        (status = 404, description = "Facility not found"),
+        (status = 500, description = "Server error")
     )
 )]
 async fn get_facility_info(

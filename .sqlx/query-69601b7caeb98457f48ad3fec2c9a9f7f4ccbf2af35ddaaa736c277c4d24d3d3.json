@@ -1,0 +1,26 @@
+{
+  "db_name": "MySQL",
+  "query": "SELECT EXISTS(\n        SELECT 1 FROM (\n            SELECT facility FROM controllers WHERE cid=? UNION ALL SELECT facility FROM visits WHERE cid=?\n        ) AS combined WHERE facility=?)\n    AS on_roster",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "on_roster",
+        "type_info": {
+          "type": "LongLong",
+          "flags": "NOT_NULL | BINARY",
+          "collation": 63,
+          "max_size": 1
+        },
+        "origin": "Expression"
+      }
+    ],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "69601b7caeb98457f48ad3fec2c9a9f7f4ccbf2af35ddaaa736c277c4d24d3d3"
+}
