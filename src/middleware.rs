@@ -27,7 +27,7 @@ pub async fn auth_middleware(
                 .to_str()
                 .map_err(|_| AppError::BadRequest("invalid X-API-Key header"))?;
 
-            let api_key = crate::queries::get_api_key(&state.vatusa_db, key).await?;
+            let api_key = crate::queries::get_api_key(&state.cobalt_db, key).await?;
 
             match api_key {
                 Some(api_key) => Auth::Key {
