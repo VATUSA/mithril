@@ -317,7 +317,7 @@ pub struct FacilityOverviewInfo {
 pub async fn get_facility_full_info(
     db: &MySqlPool,
     id: &str,
-) -> Result<FacilityOverview, AppError> {
+) -> Result<Option<FacilityOverview>, AppError> {
     let info = sqlx::query_as!(
         FacilityOverviewInfo,
         r#"
@@ -328,11 +328,14 @@ SELECT
 FROM facilities f
 WHERE f.id = ? AND f.active = 1;"#,
         id
-    ).fetch_one(db).await?;
+    ).fetch_optional(db).await?;
+    let Some(info) = info else {
+        return Ok(None);
+    };
     let roles = sqlx::query_as!(Role, r#"SELECT * FROM roles WHERE facility = ?"#, id)
         .fetch_all(db)
         .await?;
-    Ok(FacilityOverview { info, roles })
+    Ok(Some(FacilityOverview { info, roles }))
 }
 
 // ---------------------------------------------------

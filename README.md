@@ -33,6 +33,21 @@ This app follows all [Clippy](https://doc.rust-lang.org/clippy/) lints on _Night
 
 TBD
 
+## Integration testing
+
+Integration tests use [Hurl](https://hurl.dev/) to exercise the running HTTP API against
+an ephemeral, schema-only MySQL instance (no JVM, no test code to maintain).
+
+```sh
+just test-integration
+```
+
+This builds the app image, brings up `docker-compose.test.yml` (MySQL seeded from
+`tests/fixtures/*.sql`, plus the mithril app container), runs every `*.hurl` file in
+`tests/hurl/`, then tears the stack down (`down -v`) so the next run starts from a clean
+database. See `tests/fixtures/` for the schema dumps and seed data, and `tests/hurl/`
+for the test scenarios.
+
 ### Environment variables
 
 - `MITHRIL_ROSTER_POLL`: when set to `TRUE`, enable the roster change poll task

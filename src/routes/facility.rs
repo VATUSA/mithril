@@ -54,7 +54,10 @@ async fn get_facility_info(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<FacilityOverview>, AppError> {
     let info = queries::get_facility_full_info(&state.vatusa_db, &id).await?;
-    Ok(Json(info))
+    match info {
+        Some(info) => Ok(Json(info)),
+        None => Err(AppError::NotFound("Facility not found")),
+    }
 }
 
 async fn get_roster() {

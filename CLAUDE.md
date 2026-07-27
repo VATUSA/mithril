@@ -213,6 +213,36 @@ if !auth.testing {
 }
 
 ```
+
+## Integration Testing
+
+Integration tests are HTTP-level (not Rust test code), using [Hurl](https://hurl.dev/)
+against a real, ephemeral stack:
+
+- `docker-compose.test.yml` runs MySQL + the built mithril image. MySQL is bootstrapped
+  from schema dumps in `tests/fixtures/` (`01_cobalt_schema.sql`, `02_vatusa_old_schema.sql`,
+  numbered so they load in order via `docker-entrypoint-initdb.d`) plus `03_seed.sql`,
+  which inserts two `v3_api_key` rows: a ZHQ-facility, non-testing key (`test-zhq-key`)
+  used by the CRUD scenarios, and a ZHQ-facility key with `testing = 1` (`test-testing-key`)
+  used to verify testing-flagged keys never persist writes. ZHQ keys skip the
+  `cid_in_facility` roster check, so no controller/facility fixture data is needed to
+  exercise writes.
+- `tests/hurl/news.hurl` and `tests/hurl/events.hurl` contain create → read → update →
+  read → delete → read scenarios for their data type. Hurl's `[Captures]` chain IDs
+  between steps. `tests/hurl/facility.hurl` is a read-only smoke test (the facility
+  routes have no write endpoints implemented yet). `tests/hurl/testing_key.hurl` posts
+  to news and events with the testing-flagged key and asserts nothing was persisted.
+- Hurl's jsonpath filter (`$[?(@.field=='x')]`) unwraps a single match to a scalar and
+  errors on chained predicates like `count` or `nth` in that case — avoid combining a
+  filter expression with those. When asserting "no matching row," assert `jsonpath "$"
+  count == N` against the full list instead of filtering for zero matches, since a
+  filter with zero matches also isn't a plain empty list from Hurl's engine.
+- Run everything with `just test-integration`: builds the image, brings the compose
+  stack up, runs Hurl, then tears the stack down with `down -v` so the MySQL volume
+  is discarded and the next run starts from a clean database.
+- The two schema dumps are regenerated occasionally (`mysqldump --no-data`) when the
+  `cobalt`/`vatusa_old` schemas change — they are not expected to change often, so no
+  automation refreshes them.
 ## Code Quality Standards
 
 - **Linting**: `cargo +nightly clippy` enforces all Clippy lints (no warnings)

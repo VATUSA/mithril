@@ -1,0 +1,28 @@
+services:
+  mysql:
+    image: mysql:9
+    restart: "no"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: combined
+    ports:
+      - 3306:3306
+    volumes:
+      - ./tests/fixtures:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  mithril:
+    image: localhost/mithril:latest
+    restart: "no"
+    environment:
+      DATABASE_URL_VATUSA: mysql://root:password@mysql/combined?ssl-mode=disabled
+      DATABASE_URL_COBALT: mysql://root:password@mysql/combined?ssl-mode=disabled
+    ports:
+      - 4000:4000
+    depends_on:
+      mysql:
+        condition: service_healthy
