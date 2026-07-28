@@ -28,11 +28,12 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     path = "/",
     tag = "events",
     responses(
-        (status = 200, description = "Events", body = [Event]),
+        (status = 200, description = "Posted events", body = [Event]),
         (status = 500, description = "Server error")
     )
 )]
 async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event>>, AppError> {
+    // TODO should this should not show unapproved events from other facilities
     let events = queries::get_events(&state.cobalt_db).await?;
     Ok(Json(events))
 }
@@ -186,7 +187,6 @@ async fn update_event(
         (status = 403, description = "Cannot delete this event"),
         (status = 404, description = "No matching event found"),
         (status = 405, description = "Must be called with DELETE"),
-        (status = 422, description = "Malformed request body"),
         (status = 500, description = "Server error")
     ),
     params(

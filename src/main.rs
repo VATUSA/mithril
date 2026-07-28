@@ -10,7 +10,7 @@ use crate::{
 use anyhow::{Context, Result};
 use axum::Json;
 use clap::Parser;
-use std::{env, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::timeout::TimeoutLayer;
@@ -20,18 +20,6 @@ use utoipa::{
 };
 use utoipa_axum::{router::OpenApiRouter, routes};
 use utoipa_redoc::{Redoc, Servable};
-
-//
-// TODO
-//
-//  Need to consider how the "testing" flag will be included in responses.
-//  I don't want to put it into the body since that makes consumers make
-//  wrapping types. A header, perhaps?
-//
-//  Need to set up E2E tests. Need to come up with a testing environment
-//  specifically for that, outside of the standard unit tests. Will need
-//  a testing DB that's constructed from a static file.
-//
 
 mod change_poller;
 mod db;
@@ -222,21 +210,13 @@ async fn main() -> Result<()> {
     );
     tracing::debug!("set up");
 
-    let mut poller_handle = None;
-    // temporarily locked behind an env var
-    if let Ok(e) = env::var("MITHRIL_ROSTER_POLL")
-        && e.to_lowercase() == "true"
-    {
-        tracing::info!("enabling roster poll task");
-        poller_handle = Some(tokio::spawn(change_poller::run(
-            app_state.vatusa_db.clone(),
-            app_state.cobalt_db.clone(),
-            shutdown_signal(),
-        )));
-        tracing::debug!("roster poll task created");
-    } else {
-        tracing::debug!("not enabling roster poll task");
-    }
+    tracing::info!("enabling roster poll task");
+    let poller_handle = Some(tokio::spawn(change_poller::run(
+        app_state.vatusa_db.clone(),
+        app_state.cobalt_db.clone(),
+        shutdown_signal(),
+    )));
+    tracing::debug!("roster poll task created");
 
     let host_and_port = format!("{}:{}", cli.host, cli.port);
     tracing::info!("listening on http://{host_and_port}/");

@@ -49,10 +49,6 @@ This builds the app image, brings up `docker-compose.test.yml` (MySQL seeded fro
 database. See `tests/fixtures/` for the schema dumps and seed data, and `tests/hurl/`
 for the test scenarios.
 
-### Environment variables
-
-- `MITHRIL_ROSTER_POLL`: when set to `TRUE`, enable the roster change poll task
-
 ## Code coverage
 
 Combined unit + integration test coverage, via [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov):

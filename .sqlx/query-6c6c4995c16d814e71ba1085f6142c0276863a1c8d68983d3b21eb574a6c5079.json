@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "DELETE FROM v3_webhook WHERE id=?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "6c6c4995c16d814e71ba1085f6142c0276863a1c8d68983d3b21eb574a6c5079"
+}

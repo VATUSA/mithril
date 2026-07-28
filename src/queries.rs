@@ -9,6 +9,7 @@ use crate::{
     db::{ApiKey, ChangeLogEntry, Event, NewsPost, Role, Webhook},
     shared::{AppError, HasFacility},
 };
+use axum::response::AppendHeaders;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::MySqlPool;
@@ -354,9 +355,17 @@ impl HasFacility for &CreateWebhook {
     }
 }
 
-/// Create a new `v3_webhook` row. Returns the new row's id.
+/// Get a single `v3_webhook` row from the database.
 ///
-/// `db` must be the Cobalt DB pool.
+/// No facility ownership check is made at this level.
+pub async fn get_webhook(db: &MySqlPool, id: i32) -> Result<Option<Webhook>, AppError> {
+    let webhook = sqlx::query_as!(Webhook, r#"SELECT * FROM v3_webhook WHERE id=?"#, id)
+        .fetch_optional(db)
+        .await?;
+    Ok(webhook)
+}
+
+/// Create a new `v3_webhook` row. Returns the new row's id.
 pub async fn create_webhook(
     db: &MySqlPool,
     facility: &str,
@@ -375,10 +384,34 @@ pub async fn create_webhook(
     Ok(id)
 }
 
+#[derive(Debug, Serialize, ToSchema)]
+pub struct WebhookInfo {
+    pub id: i64,
+    pub url: String,
+    pub created_at: chrono::DateTime<Utc>,
+    pub updated_at: Option<chrono::DateTime<Utc>>,
+}
+
 /// Get all non-deleted `v3_webhook` rows for a facility.
-///
-/// `db` must be the Cobalt DB pool.
 pub async fn get_webhooks_for_facility(
+    db: &MySqlPool,
+    facility: &str,
+) -> Result<Vec<WebhookInfo>, AppError> {
+    let rows = sqlx::query_as!(
+        WebhookInfo,
+        r#"SELECT id, url, created_at, updated_at
+        FROM v3_webhook WHERE facility = ? AND deleted_at IS NULL"#,
+        facility
+    )
+    .fetch_all(db)
+    .await?;
+    Ok(rows)
+}
+
+/// Get all non-deleted `v3_webhook` rows for a facility with all their info.
+///
+/// Internal use only.
+pub async fn get_webhooks_for_facility_full(
     db: &MySqlPool,
     facility: &str,
 ) -> Result<Vec<Webhook>, AppError> {
@@ -391,6 +424,16 @@ pub async fn get_webhooks_for_facility(
     .fetch_all(db)
     .await?;
     Ok(rows)
+}
+
+/// Delete a `v3_webhooks` row.
+///
+/// No facility ownership check is made at this level.
+pub async fn delete_webhook(db: &MySqlPool, id: i32) -> Result<(), AppError> {
+    sqlx::query!("DELETE FROM v3_webhook WHERE id=?", id)
+        .execute(db)
+        .await?;
+    Ok(())
 }
 
 // ---------------------------------------------------

@@ -32,7 +32,7 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     path = "/",
     tag = "news",
     responses(
-        (status = 200, description = "News", body = [NewsPost]),
+        (status = 200, description = "News posts", body = [NewsPost]),
         (status = 500, description = "Server error")
     )
 )]
@@ -197,12 +197,10 @@ async fn update_news(
     tag = "news",
     responses(
         (status = 204, description = "News post deleted"),
-        (status = 400, description = "Malformed request"),
         (status = 401, description = "Must be called with an API key"),
         (status = 403, description = "Author CID not in your facility"),
         (status = 404, description = "No matching news post found"),
         (status = 405, description = "Must be called with DELETE"),
-        (status = 422, description = "Malformed request body"),
         (status = 500, description = "Server error")
     ),
     params(

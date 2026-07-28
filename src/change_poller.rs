@@ -1,10 +1,7 @@
 //! Background poller for the `roster_notifications` table.
 
 use crate::db::{ChangeLogEntry, Webhook};
-use crate::queries::{
-    delete_processed_changes, get_unprocessed_changes, get_webhooks_for_facility,
-    mark_change_processed,
-};
+use crate::queries;
 use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
 use sqlx::MySqlPool;
@@ -63,7 +60,7 @@ async fn poll_once(
     cobalt_db: &MySqlPool,
     http: &reqwest::Client,
 ) -> Result<(), crate::shared::AppError> {
-    let changes = get_unprocessed_changes(vatusa_db, 100).await?;
+    let changes = queries::get_unprocessed_changes(vatusa_db, 100).await?;
     for change in changes {
         tracing::info!(
             "[roster_notifications #{}] {} {} pk={} old={} new={}",
@@ -84,13 +81,13 @@ async fn poll_once(
         );
 
         for facility in target_facilities(&change) {
-            let webhooks = get_webhooks_for_facility(cobalt_db, &facility).await?;
+            let webhooks = queries::get_webhooks_for_facility_full(cobalt_db, &facility).await?;
             for webhook in webhooks {
                 deliver(http, &webhook, &change).await;
             }
         }
 
-        mark_change_processed(vatusa_db, change.id).await?;
+        queries::mark_change_processed(vatusa_db, change.id).await?;
     }
     Ok(())
 }
@@ -188,7 +185,7 @@ async fn deliver(http: &reqwest::Client, webhook: &Webhook, change: &ChangeLogEn
 
 /// Delete processed `roster_notifications` rows past their retention window.
 async fn cleanup_once(db: &MySqlPool) -> Result<(), crate::shared::AppError> {
-    let deleted = delete_processed_changes(db, RETENTION_DAYS).await?;
+    let deleted = queries::delete_processed_changes(db, RETENTION_DAYS).await?;
     if deleted > 0 {
         tracing::info!("change_poller cleanup: deleted {deleted} processed row(s)");
     }
