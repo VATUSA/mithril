@@ -1,0 +1,12 @@
+{
+  "db_name": "MySQL",
+  "query": "UPDATE v3_webhook SET deleted_at=? WHERE id=?",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "86746ee50a39b30d52d8b0ecab7e2ef3ffaaf30689f2c4ac586685b6c9cc1f03"
+}

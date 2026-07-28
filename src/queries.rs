@@ -430,9 +430,13 @@ pub async fn get_webhooks_for_facility_full(
 ///
 /// No facility ownership check is made at this level.
 pub async fn delete_webhook(db: &MySqlPool, id: i32) -> Result<(), AppError> {
-    sqlx::query!("DELETE FROM v3_webhook WHERE id=?", id)
-        .execute(db)
-        .await?;
+    sqlx::query!(
+        "UPDATE v3_webhook SET deleted_at=? WHERE id=?",
+        Utc::now(),
+        id
+    )
+    .execute(db)
+    .await?;
     Ok(())
 }
 
