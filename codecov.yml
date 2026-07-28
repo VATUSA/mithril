@@ -1,0 +1,15 @@
+---
+# Codecov reports coverage; it does not gate merges.
+#
+# `informational: true` keeps both statuses posting their numbers to the commit
+# and the PR, but they always resolve green, so a diff with no new tests can't
+# fail a check. Without this, `codecov/patch` fails whenever a commit's changed
+# lines are covered less than the project target.
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
