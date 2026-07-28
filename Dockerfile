@@ -32,6 +32,11 @@ FROM debian:trixie-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7
 WORKDIR /app
 EXPOSE 4000
 
+# reqwest (rustls) loads root certs from the system trust store at runtime;
+# debian-slim doesn't ship it by default.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy compiled binary
 COPY --from=builder /app/mithril /usr/local/bin/mithril
 
