@@ -37,3 +37,33 @@ jobs:
 
       - name: cargo test
         run: cargo t
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install just, cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just,cargo-llvm-cov
+
+      - name: Install hurl
+        run: |
+          curl -sLO https://github.com/Orange-OpenSource/hurl/releases/download/8.0.1/hurl_8.0.1_amd64.deb
+          sudo dpkg -i hurl_8.0.1_amd64.deb
+
+      - name: just test-coverage
+        run: just test-coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: target/llvm-cov/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true

@@ -243,6 +243,39 @@ against a real, ephemeral stack:
 - The two schema dumps are regenerated occasionally (`mysqldump --no-data`) when the
   `cobalt`/`vatusa_old` schemas change — they are not expected to change often, so no
   automation refreshes them.
+
+## Code Coverage
+
+`just test-coverage` produces one merged coverage report for unit tests *and* the Hurl
+integration suite, using [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov):
+
+- Unit tests run via `cargo llvm-cov --no-report` (writes profraw data, no report yet).
+- The app is then run natively — not the Docker image — via `cargo llvm-cov run --no-report
+  -- --host 0.0.0.0 --port 4000`, instrumented the same way, against only the `mysql`
+  service from `docker-compose.test.yml` (started standalone, not the full stack). This
+  keeps the Hurl requests hitting the same instrumented binary that's collecting unit
+  test coverage, so both merge into one profile.
+- Graceful shutdown matters here: the recipe sends the app process `SIGTERM` after Hurl
+  finishes, and only a clean exit (not a kill -9) flushes the LLVM profiling runtime's
+  profraw data — this already works because the app's existing SIGTERM handler
+  (`shutdown_signal` in `main.rs`) causes `main` to return normally.
+- `cargo llvm-cov run` (not a manual `cargo llvm-cov show-env` + `cargo build`) is
+  required to get the instrumented binary — sourcing `show-env` and building manually
+  left the profiled and non-profiled binaries in different target dirs and cargo didn't
+  reliably invalidate/rebuild the cached one, silently producing an uninstrumented binary
+  with no profraw output at all.
+- `cargo llvm-cov report --html` merges every profraw file found under
+  `target/llvm-cov-target/` into `target/llvm-cov/html/index.html`; the recipe also
+  emits `--lcov --output-path target/llvm-cov/lcov.info` and `--summary-only` in the
+  same run.
+- CI (`.github/workflows/validate.yml`, `coverage` job) installs `just`/`cargo-llvm-cov`
+  via `taiki-e/install-action`, installs `hurl` from its `.deb` GitHub release (not
+  listed in `taiki-e/install-action`'s tool manifest), runs `just test-coverage`, and
+  uploads `target/llvm-cov/lcov.info` to Codecov via `codecov/codecov-action`. The
+  README's coverage badge points at `codecov.io/gh/vatusa/mithril`. A `CODECOV_TOKEN`
+  repo secret should be set (required for reliable uploads even on public repos since
+  Codecov tightened tokenless uploads).
+
 ## Code Quality Standards
 
 - **Linting**: `cargo +nightly clippy` enforces all Clippy lints (no warnings)

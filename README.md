@@ -3,6 +3,7 @@
 ![lang](https://img.shields.io/badge/lang-rust-orange)
 ![licensing](https://img.shields.io/badge/license-MIT-green)
 ![status](https://img.shields.io/badge/project_status-in_dev-yellow)
+[![codecov](https://codecov.io/gh/vatusa/mithril/branch/master/graph/badge.svg)](https://codecov.io/gh/vatusa/mithril)
 
 New VATUSA API for facilities and guests.
 
@@ -51,6 +52,24 @@ for the test scenarios.
 ### Environment variables
 
 - `MITHRIL_ROSTER_POLL`: when set to `TRUE`, enable the roster change poll task
+
+## Code coverage
+
+Combined unit + integration test coverage, via [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov):
+
+```sh
+just test-coverage
+```
+
+This runs `cargo test`'s unit tests, then runs the app natively (instrumented by
+`cargo llvm-cov run`) against a dockerized MySQL-only instance and exercises it with the
+same `tests/hurl/*.hurl` suite used by `just test-integration`, so both test styles feed
+one merged report. Output: a terminal summary, an HTML report at
+`target/llvm-cov/html/index.html`, and an lcov file at `target/llvm-cov/lcov.info`.
+
+CI runs the same recipe on every push/PR (`.github/workflows/validate.yml`, `coverage`
+job) and uploads the lcov file to [Codecov](https://codecov.io/gh/vatusa/mithril), which
+is what the badge above reflects.
 
 ## Deploying
 
