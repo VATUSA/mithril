@@ -153,6 +153,20 @@ pub fn determine_facility(auth: &RequireAuth, data: impl HasFacility) -> Result<
     }
 }
 
+/// Determine whether an auth context can view an unpublished event.
+///
+/// Division keys can view any facility's events while subdivision-specific
+/// keys can only view items they created. No access without a key.
+pub fn can_view_unapproved(auth: &Auth, owner_facility: &str) -> bool {
+    match auth {
+        Auth::Anonymous => false,
+        Auth::Key { facility, .. } => {
+            let facility = facility.as_deref().unwrap_or_default();
+            facility == "ZHQ" || facility == owner_facility
+        }
+    }
+}
+
 /// Custom `String` type for endpoint payloads.
 pub fn non_empty_string<'de, D>(deserializer: D) -> Result<String, D::Error>
 where

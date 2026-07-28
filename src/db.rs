@@ -87,7 +87,7 @@ pub struct NewsPost {
 /// Event posting, Cobalt DB.
 ///
 /// **Table**: `event`
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct Event {
     pub id: i64,
     pub title: String,

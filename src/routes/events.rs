@@ -2,9 +2,9 @@
 
 use crate::{
     db::Event,
-    middleware::RequireAuth,
+    middleware::{AuthExtractor, RequireAuth},
     queries::{self, CreateEvent, UpdateEvent},
-    shared::{AppError, AppState, determine_facility},
+    shared::{AppError, AppState, can_view_unapproved, determine_facility},
 };
 use axum::{
     Json,
@@ -32,9 +32,19 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
         (status = 500, description = "Server error")
     )
 )]
-async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event>>, AppError> {
-    // TODO should this should not show unapproved events from other facilities
+async fn get_events(
+    auth: AuthExtractor,
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<Event>>, AppError> {
     let events = queries::get_events(&state.cobalt_db).await?;
+    let events = events
+        .iter()
+        .filter(|e| {
+            e.review_status.as_deref().unwrap_or_default() == "approved"
+                || can_view_unapproved(&auth.0, &e.facility)
+        })
+        .cloned()
+        .collect();
     Ok(Json(events))
 }
 
@@ -54,13 +64,22 @@ async fn get_events(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Event
 )]
 async fn get_single_event(
     Path(id): Path<i32>,
+    auth: AuthExtractor,
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Event>, AppError> {
     let event = queries::get_event(&state.cobalt_db, id).await?;
-    match event {
-        Some(e) => Ok(Json(e)),
-        None => Err(AppError::NotFound("No event with given id found")),
+    let event = match event {
+        Some(e) => e,
+        None => {
+            return Err(AppError::NotFound("event not found"));
+        }
+    };
+    if event.review_status.as_deref().unwrap_or_default() != "approved"
+        && !can_view_unapproved(&auth.0, &event.facility)
+    {
+        return Err(AppError::NotFound("event not found"));
     }
+    Ok(Json(event))
 }
 
 /// Create an event
