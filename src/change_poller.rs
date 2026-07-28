@@ -30,8 +30,15 @@ pub async fn run(
     let mut cleanup_ticker = interval(Duration::from_secs(60 * 60));
     tokio::pin!(shutdown);
 
-    // sleep for startup
-    tokio::time::sleep(Duration::from_secs(5)).await;
+    // sleep for startup, but stay interruptible: a shutdown arriving during
+    // this window must not be deferred until the sleep elapses.
+    tokio::select! {
+        _ = tokio::time::sleep(Duration::from_secs(5)) => {}
+        _ = &mut shutdown => {
+            tracing::warn!("change_poller shutting down during startup");
+            return;
+        }
+    }
 
     loop {
         tokio::select! {

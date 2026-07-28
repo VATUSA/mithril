@@ -259,8 +259,16 @@ integration suite, using [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-
   test coverage, so both merge into one profile.
 - Graceful shutdown matters here: the recipe sends the app process `SIGTERM` after Hurl
   finishes, and only a clean exit (not a kill -9) flushes the LLVM profiling runtime's
-  profraw data — this already works because the app's existing SIGTERM handler
-  (`shutdown_signal` in `main.rs`) causes `main` to return normally.
+  profraw data, so `main` must return normally (see Graceful shutdown below).
+- Because a missed shutdown silently yields a 0% report rather than an error, the recipe
+  asserts each step instead of trusting it: it fails loudly if the app process never
+  starts, never answers `/health`, or is still alive after `SIGTERM`.
+- The app's pid is found with `pgrep -f "^target/llvm-cov-target/debug/mithril --host"`,
+  because `cargo run` spawns the binary as a child and `$!` is cargo's pid. The `^` anchor
+  is required — an unanchored pattern also matches the enclosing shell's own command line,
+  yielding a multi-line `APP_PID` that makes `kill` fail.
+- The binary is compiled up front (`cargo llvm-cov run -- --version`) so the readiness wait
+  times a starting process rather than a build.
 - `cargo llvm-cov run` (not a manual `cargo llvm-cov show-env` + `cargo build`) is
   required to get the instrumented binary — sourcing `show-env` and building manually
   left the profiled and non-profiled binaries in different target dirs and cargo didn't
@@ -287,7 +295,23 @@ integration suite, using [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-
 
 ## Notable Implementation Details
 
-- **Graceful shutdown**: Listens for SIGTERM (unix) and SIGINT (Ctrl+C)
+- **Graceful shutdown**: `install_shutdown_handler` in `main.rs` registers the SIGTERM/SIGINT
+  handlers *synchronously at startup* and fans the result out to consumers (the HTTP server
+  and the roster change poller) over a `tokio::sync::watch` channel. Both details matter and
+  should not be "simplified" back:
+  - Registering lazily — building the signal stream inside an `async` block, as the upstream
+    axum example does — only registers it when that block is **first polled**. The change
+    poller isn't polled until after its 5-second startup sleep, so a signal arriving in that
+    window was missed permanently. Worse, the *first* registration already replaces the
+    default SIGTERM disposition process-wide, so the signal stopped killing the process:
+    `main` blocked forever on `poller_handle.await` and the process had to be SIGKILLed.
+  - A `watch` channel (rather than calling the helper once per consumer) means a consumer
+    that starts polling late still observes a shutdown that already happened.
+  - This bit integration coverage specifically: the Hurl suite runs in ~1 second, so
+    `just test-coverage`'s `kill -TERM` always landed inside that 5-second window. The
+    orphaned app never flushed its profraw file and the report came out **0.00%** while every
+    Hurl test passed. It was equally a production bug — a SIGTERM in a pod's first 5 seconds
+    would hang the container until the kubelet force-killed it.
 - **Request tracing**: tower-http TraceLayer logs all requests
 - **Request timeout**: 60-second timeout for all requests (TimeoutLayer)
 - **Rate limiting**: Uses tower_governor (configured but integration pending)

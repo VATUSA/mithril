@@ -57,29 +57,55 @@ struct Cli {
 }
 
 // https://github.com/tokio-rs/axum/blob/main/examples/graceful-shutdown/src/main.rs
-async fn shutdown_signal() {
-    let ctrl_c = async {
-        signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
-        tracing::warn!("got terminate signal");
-    };
+/// Install the SIGINT/SIGTERM handlers and fan the result out over a watch
+/// channel, returning a receiver that consumers turn into futures via
+/// [`shutdown_signal`].
+///
+/// Registration happens synchronously here rather than inside the task that
+/// awaits the signal. Building the signal stream lazily (i.e. inside an `async`
+/// block) only registers it when that block is *first polled*, so a signal
+/// arriving beforehand is missed permanently — and because the first
+/// registration already replaces the default SIGTERM disposition, the process
+/// then ignores the signal instead of dying. Fanning out through a watch channel
+/// (rather than calling this once per consumer) means a consumer that starts
+/// polling late still observes a shutdown that already happened.
+fn install_shutdown_handler() -> Result<tokio::sync::watch::Receiver<bool>> {
+    let (tx, rx) = tokio::sync::watch::channel(false);
 
     #[cfg(unix)]
-    let terminate = async {
-        signal::unix::signal(signal::unix::SignalKind::terminate())
-            .expect("failed to install signal handler")
-            .recv()
-            .await;
-        tracing::warn!("got terminate signal");
-    };
+    {
+        let mut interrupt = signal::unix::signal(signal::unix::SignalKind::interrupt())
+            .context("Could not install the SIGINT handler")?;
+        let mut terminate = signal::unix::signal(signal::unix::SignalKind::terminate())
+            .context("Could not install the SIGTERM handler")?;
+        tokio::spawn(async move {
+            tokio::select! {
+                _ = interrupt.recv() => {},
+                _ = terminate.recv() => {},
+            }
+            tracing::warn!("got terminate signal");
+            let _ = tx.send(true);
+        });
+    }
 
     #[cfg(not(unix))]
-    let terminate = std::future::pending::<()>();
+    tokio::spawn(async move {
+        let _ = signal::ctrl_c().await;
+        tracing::warn!("got terminate signal");
+        let _ = tx.send(true);
+    });
 
-    tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
+    Ok(rx)
+}
+
+/// Resolve once shutdown has been signalled, including when it was signalled
+/// before this future was first polled.
+async fn shutdown_signal(mut rx: tokio::sync::watch::Receiver<bool>) {
+    // A send error means the sender was dropped, which also implies shutdown.
+    while !*rx.borrow_and_update() {
+        if rx.changed().await.is_err() {
+            break;
+        }
     }
 }
 
@@ -210,11 +236,13 @@ async fn main() -> Result<()> {
     );
     tracing::debug!("set up");
 
+    let shutdown_rx = install_shutdown_handler()?;
+
     tracing::info!("enabling roster poll task");
     let poller_handle = Some(tokio::spawn(change_poller::run(
         app_state.vatusa_db.clone(),
         app_state.cobalt_db.clone(),
-        shutdown_signal(),
+        shutdown_signal(shutdown_rx.clone()),
     )));
     tracing::debug!("roster poll task created");
 
@@ -224,7 +252,7 @@ async fn main() -> Result<()> {
         .await
         .context("Could not bind the HTTP listener")?;
     axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(shutdown_signal(shutdown_rx))
         .await
         .context("Could not serve the app")?;
 
