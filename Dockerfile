@@ -1,24 +1,31 @@
+# ---- Chef stage (shared base with cargo-chef installed) ----
+FROM rust:1.97.1@sha256:1bcff4befb740599103a2c7cb51058e14479b2e35e3a34a3f0dc4ede09927488 AS chef
+WORKDIR /app
+RUN cargo install cargo-chef --locked
+
+# ---- Planner: compute the dependency recipe from Cargo.toml/Cargo.lock ----
+FROM chef AS planner
+COPY Cargo.toml Cargo.lock ./
+COPY src ./src
+RUN cargo chef prepare --recipe-path recipe.json
+
 # ---- Build stage ----
-FROM rust:1.97.1@sha256:1bcff4befb740599103a2c7cb51058e14479b2e35e3a34a3f0dc4ede09927488 AS builder
+FROM chef AS builder
 WORKDIR /app
 ENV SQLX_OFFLINE=true
 
-# 1. Cache dependencies
-COPY Cargo.toml Cargo.lock ./
-RUN mkdir src && echo "fn main() {}" > src/main.rs
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/app/target \
-    cargo build --release
-RUN rm -rf src
+# 1. Build just the dependencies. This layer is cached by Docker/GHA layer
+# caching keyed on recipe.json, so it's only invalidated when Cargo.toml or
+# Cargo.lock change (unlike `RUN --mount=type=cache`, which GHA's cache
+# backend does not persist across ephemeral runners).
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
 
 # 2. Build actual app
+COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY .sqlx ./.sqlx
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/app/target \
-    rm -f target/release/deps/mithril* target/release/mithril* && \
-    cargo build --release && \
-    cp target/release/mithril /app/mithril
+RUN cargo build --release && cp target/release/mithril /app/mithril
 
 # ---- Runtime stage ----
 FROM debian:trixie-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7ab59f2add76a7bd AS app
