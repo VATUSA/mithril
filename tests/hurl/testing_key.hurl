@@ -1,6 +1,7 @@
 # Verifies the `testing` flag on an API key: the endpoint still responds as
-# if the write succeeded, but no row is actually persisted. Covers news and
-# events, the two write-capable data types with CRUD tests in this suite.
+# if the write succeeded, but no row is actually persisted. Covers news,
+# events, and webhooks, the write-capable data types with CRUD tests in this
+# suite.
 
 POST http://localhost:4000/news
 X-API-Key: test-testing-key
@@ -33,6 +34,21 @@ Content-Type: application/json
 HTTP 201
 
 GET http://localhost:4000/events
+X-API-Key: test-testing-key
+HTTP 200
+[Asserts]
+jsonpath "$" count == 0
+
+
+POST http://localhost:4000/webhooks
+X-API-Key: test-testing-key
+Content-Type: application/json
+{
+    "url": "https://example.com/testing-webhook"
+}
+HTTP 201
+
+GET http://localhost:4000/webhooks
 X-API-Key: test-testing-key
 HTTP 200
 [Asserts]

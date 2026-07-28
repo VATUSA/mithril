@@ -230,8 +230,10 @@ against a real, ephemeral stack:
 - `tests/hurl/news.hurl` and `tests/hurl/events.hurl` contain create → read → update →
   read → delete → read scenarios for their data type. Hurl's `[Captures]` chain IDs
   between steps. `tests/hurl/facility.hurl` is a read-only smoke test (the facility
-  routes have no write endpoints implemented yet). `tests/hurl/testing_key.hurl` posts
-  to news and events with the testing-flagged key and asserts nothing was persisted.
+  routes have no write endpoints implemented yet). `tests/hurl/webhooks.hurl` covers
+  create → read → delete → read (no update endpoint exists) plus the https-only URL
+  validation on create. `tests/hurl/testing_key.hurl` posts to news, events, and
+  webhooks with the testing-flagged key and asserts nothing was persisted.
 - Hurl's jsonpath filter (`$[?(@.field=='x')]`) unwraps a single match to a scalar and
   errors on chained predicates like `count` or `nth` in that case — avoid combining a
   filter expression with those. When asserting "no matching row," assert `jsonpath "$"

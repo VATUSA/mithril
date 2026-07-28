@@ -7,7 +7,73 @@ not redelivered.
 
 ## Creating / deleting a webhook
 
-TBD.
+### Create a webhook
+
+```
+POST /webhooks
+```
+
+**Authentication**: Required (X-API-Key header)
+
+**Request body**:
+```json
+{
+  "url": "https://example.com/webhook",
+  "facility": "ZAE"
+}
+```
+
+Note: `facility` is optional; if omitted, defaults to the facility associated with the
+API key. ZHQ keys may explicitly specify any facility; non-ZHQ keys are limited to their
+assigned facility.
+
+**Response** (201 Created):
+```json
+{
+  "id": 1,
+  "secret": "abcdef0123456789..."
+}
+```
+
+The secret is returned only at creation time and cannot be retrieved again. Store it
+securely for use in verifying webhook signatures.
+
+### List webhooks
+
+```
+GET /webhooks
+```
+
+**Authentication**: Required (X-API-Key header)
+
+**Response** (200 OK):
+```json
+[
+  {
+    "id": 1,
+    "url": "https://example.com/webhook",
+    "created_at": "2026-07-12T23:26:34Z",
+    "updated_at": null
+  }
+]
+```
+
+Lists all active (non-deleted) webhooks for the calling facility's API key.
+
+### Delete a webhook
+
+```
+DELETE /webhooks/{id}
+```
+
+**Authentication**: Required (X-API-Key header)
+
+**Path parameters**:
+- `id` (integer): Webhook ID to delete
+
+**Response** (204 No Content)
+
+Returns 403 Forbidden if the webhook belongs to a different facility than the API key.
 
 ## Payload shape
 
