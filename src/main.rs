@@ -238,13 +238,20 @@ async fn main() -> Result<()> {
 
     let shutdown_rx = install_shutdown_handler()?;
 
-    tracing::info!("enabling roster poll task");
-    let poller_handle = Some(tokio::spawn(change_poller::run(
-        app_state.vatusa_db.clone(),
-        app_state.cobalt_db.clone(),
-        shutdown_signal(shutdown_rx.clone()),
-    )));
-    tracing::debug!("roster poll task created");
+    let poller_handle = if std::env::var("DISABLE_ROSTER_POLLER")
+        .map(|v| v.to_lowercase() == "true")
+        .unwrap_or(false)
+    {
+        tracing::info!("roster poll task disabled via DISABLE_ROSTER_POLLER");
+        None
+    } else {
+        tracing::info!("starting roster poll task");
+        Some(tokio::spawn(change_poller::run(
+            app_state.vatusa_db.clone(),
+            app_state.cobalt_db.clone(),
+            shutdown_signal(shutdown_rx.clone()),
+        )))
+    };
 
     let host_and_port = format!("{}:{}", cli.host, cli.port);
     tracing::info!("listening on http://{host_and_port}/");

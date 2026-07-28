@@ -32,7 +32,9 @@ This app follows all [Clippy](https://doc.rust-lang.org/clippy/) lints on _Night
 
 ## Running
 
-TBD
+### Environment Variables
+
+- `DISABLE_ROSTER_POLLER`: Set to `true` or `1` to disable the roster change poller background task. By default, the poller runs and periodically syncs roster changes. Set this to disable polling in development or testing scenarios.
 
 ## Integration testing
 
