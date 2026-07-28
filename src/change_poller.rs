@@ -67,7 +67,7 @@ async fn poll_once(
     cobalt_db: &MySqlPool,
     http: &reqwest::Client,
 ) -> Result<(), crate::shared::AppError> {
-    let changes = queries::get_unprocessed_changes(vatusa_db, 100).await?;
+    let changes = queries::claim_unprocessed_changes(vatusa_db, 100).await?;
     for change in changes {
         tracing::info!(
             "[roster_notifications #{}] {} {} pk={} old={} new={}",
@@ -93,8 +93,6 @@ async fn poll_once(
                 deliver(http, &webhook, &change).await;
             }
         }
-
-        queries::mark_change_processed(vatusa_db, change.id).await?;
     }
     Ok(())
 }

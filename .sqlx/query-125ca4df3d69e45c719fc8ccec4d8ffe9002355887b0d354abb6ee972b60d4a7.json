@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT id, table_name, row_pk, operation,\n        old_value as `old_value: serde_json::Value`,\n        new_value as `new_value: serde_json::Value`,\n        created_at, processed_at\n        FROM roster_notifications WHERE processed_at IS NULL\n        ORDER BY id ASC LIMIT ?",
+  "query": "SELECT id, table_name, row_pk, operation,\n        old_value as `old_value: serde_json::Value`,\n        new_value as `new_value: serde_json::Value`,\n        created_at, processed_at\n        FROM roster_notifications WHERE processed_at IS NULL\n        ORDER BY id ASC LIMIT ?\n        FOR UPDATE SKIP LOCKED",
   "describe": {
     "columns": [
       {
@@ -146,5 +146,5 @@
       true
     ]
   },
-  "hash": "78f21d9aea887184e0c9653eebdafb6fd8c0a6d85473334b5e1155757a6fcb78"
+  "hash": "125ca4df3d69e45c719fc8ccec4d8ffe9002355887b0d354abb6ee972b60d4a7"
 }

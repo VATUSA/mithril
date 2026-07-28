@@ -440,11 +440,19 @@ pub async fn delete_webhook(db: &MySqlPool, id: i32) -> Result<(), AppError> {
 // roster_notifications
 // ---------------------------------------------------
 
-/// Get unprocessed `roster_notifications` rows, oldest first.
-pub async fn get_unprocessed_changes(
+/// Atomically claim a batch of unprocessed `roster_notifications` rows, oldest first.
+///
+/// Runs `SELECT ... FOR UPDATE SKIP LOCKED` and the `processed_at` update in a single
+/// transaction, so that with multiple app instances polling concurrently, each row is
+/// claimed (and thus delivered) by exactly one poller. Rows are marked processed here,
+/// before delivery, matching the existing single-attempt/no-retry delivery semantics —
+/// a delivery failure after this point is not retried.
+pub async fn claim_unprocessed_changes(
     db: &MySqlPool,
     limit: i64,
 ) -> Result<Vec<ChangeLogEntry>, AppError> {
+    let mut tx = db.begin().await?;
+
     let rows = sqlx::query_as!(
         ChangeLogEntry,
         r#"SELECT id, table_name, row_pk, operation,
@@ -452,23 +460,25 @@ pub async fn get_unprocessed_changes(
         new_value as `new_value: serde_json::Value`,
         created_at, processed_at
         FROM roster_notifications WHERE processed_at IS NULL
-        ORDER BY id ASC LIMIT ?"#,
+        ORDER BY id ASC LIMIT ?
+        FOR UPDATE SKIP LOCKED"#,
         limit
     )
-    .fetch_all(db)
+    .fetch_all(&mut *tx)
     .await?;
-    Ok(rows)
-}
 
-/// Mark a single `roster_notifications` row as processed (sets `processed_at = NOW()`).
-pub async fn mark_change_processed(db: &MySqlPool, id: u64) -> Result<(), AppError> {
-    sqlx::query!(
-        "UPDATE roster_notifications SET processed_at = NOW() WHERE id = ?",
-        id
-    )
-    .execute(db)
-    .await?;
-    Ok(())
+    for row in &rows {
+        sqlx::query!(
+            "UPDATE roster_notifications SET processed_at = NOW() WHERE id = ?",
+            row.id
+        )
+        .execute(&mut *tx)
+        .await?;
+    }
+
+    tx.commit().await?;
+
+    Ok(rows)
 }
 
 /// Delete processed `roster_notifications` rows older than `retention_days`.

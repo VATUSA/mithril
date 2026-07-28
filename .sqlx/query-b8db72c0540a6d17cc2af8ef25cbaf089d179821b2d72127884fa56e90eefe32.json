@@ -184,7 +184,7 @@
         "name": "review_status",
         "type_info": {
           "type": "VarString",
-          "flags": "",
+          "flags": "MULTIPLE_KEY",
           "collation": 255,
           "max_size": 160
         },
