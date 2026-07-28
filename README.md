@@ -11,7 +11,9 @@ All content herein is solely for use on the [VATSIM network](https://vatsim.net/
 
 ## Project goals
 
-TBD
+1. Completely replace the existing VATUSA API for subdivisions and other clients
+2. Be accurate, consistent, and correct
+3. Be fast
 
 ## Building
 
