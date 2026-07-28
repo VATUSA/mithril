@@ -2,7 +2,7 @@
 
 ![lang](https://img.shields.io/badge/lang-rust-orange)
 ![licensing](https://img.shields.io/badge/license-MIT-green)
-![status](https://img.shields.io/badge/project_status-in_dev-yellow)
+[![Validate](https://github.com/VATUSA/mithril/actions/workflows/validate.yml/badge.svg)](https://github.com/VATUSA/mithril/actions/workflows/validate.yml)
 [![codecov](https://codecov.io/gh/vatusa/mithril/branch/master/graph/badge.svg)](https://codecov.io/gh/vatusa/mithril)
 
 New VATUSA API for facilities and guests.
