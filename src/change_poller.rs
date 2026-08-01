@@ -69,7 +69,7 @@ async fn poll_once(
 ) -> Result<(), crate::shared::AppError> {
     let changes = queries::claim_unprocessed_changes(vatusa_db, 100).await?;
     for change in changes {
-        tracing::info!(
+        tracing::debug!(
             "[roster_notifications #{}] {} {} pk={} old={} new={}",
             change.id,
             change.table_name,
@@ -192,7 +192,7 @@ async fn deliver(http: &reqwest::Client, webhook: &Webhook, change: &ChangeLogEn
 async fn cleanup_once(db: &MySqlPool) -> Result<(), crate::shared::AppError> {
     let deleted = queries::delete_processed_changes(db, RETENTION_DAYS).await?;
     if deleted > 0 {
-        tracing::info!("change_poller cleanup: deleted {deleted} processed row(s)");
+        tracing::debug!("change_poller cleanup: deleted {deleted} processed row(s)");
     }
     Ok(())
 }
