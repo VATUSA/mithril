@@ -222,11 +222,12 @@ against a real, ephemeral stack:
 - `docker-compose.test.yml` runs MySQL + the built mithril image. MySQL is bootstrapped
   from schema dumps in `tests/fixtures/` (`01_cobalt_schema.sql`, `02_vatusa_old_schema.sql`,
   numbered so they load in order via `docker-entrypoint-initdb.d`) plus `03_seed.sql`,
-  which inserts two `v3_api_key` rows: a ZHQ-facility, non-testing key (`test-zhq-key`)
-  used by the CRUD scenarios, and a ZHQ-facility key with `testing = 1` (`test-testing-key`)
-  used to verify testing-flagged keys never persist writes. ZHQ keys skip the
-  `cid_in_facility` roster check, so no controller/facility fixture data is needed to
-  exercise writes.
+  which inserts three `v3_api_key` rows: a ZHQ-facility, non-testing key (`test-zhq-key`)
+  used by the CRUD scenarios, a ZHQ-facility key with `testing = 1` (`test-testing-key`)
+  used to verify testing-flagged keys never persist writes, and a ZHU-facility,
+  non-testing key (`test-facility-key`) used to verify facility-scoped visibility on
+  events. ZHQ keys skip the `cid_in_facility` roster check, so no controller/facility
+  fixture data is needed to exercise writes.
 - `tests/hurl/news.hurl` and `tests/hurl/events.hurl` contain create → read → update →
   read → delete → read scenarios for their data type. Hurl's `[Captures]` chain IDs
   between steps. `tests/hurl/facility.hurl` is a read-only smoke test (the facility
@@ -234,6 +235,15 @@ against a real, ephemeral stack:
   create → read → delete → read (no update endpoint exists) plus the https-only URL
   validation on create. `tests/hurl/testing_key.hurl` posts to news, events, and
   webhooks with the testing-flagged key and asserts nothing was persisted.
+- `tests/hurl/events_pagination.hurl` covers GET `/events`'s `page`/`count` query
+  params and visibility filtering: creates 4 events (3 owned by ZHQ, 1 by ZHU, all left
+  unapproved) and asserts `ORDER BY start_time` ordering across pages, the
+  `X-Total-Count`/`X-Total-Pages` response headers, an out-of-range page returning an
+  empty array, `count` being clamped to a minimum of 1 and capped at 100, an anonymous
+  caller seeing zero events (unapproved-only filter), and the `test-facility-key` (ZHU)
+  seeing only its own facility's event. It deletes everything it creates before
+  finishing, since `testing_key.hurl` asserts GET `/events` returns `count == 0` and
+  relies on the table being empty by the time it runs.
 - Hurl's jsonpath filter (`$[?(@.field=='x')]`) unwraps a single match to a scalar and
   errors on chained predicates like `count` or `nth` in that case — avoid combining a
   filter expression with those. When asserting "no matching row," assert `jsonpath "$"

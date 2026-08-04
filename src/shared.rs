@@ -167,6 +167,17 @@ pub fn can_view_unapproved(auth: &Auth, owner_facility: &str) -> bool {
     }
 }
 
+/// Extract the facility that should be used to evaluate unapproved-event
+/// visibility in SQL, mirroring [`can_view_unapproved`]'s rule: only a
+/// facility-bound key grants any extra visibility, so an anonymous caller
+/// or a key without a facility gets `None` (approved-only).
+pub fn viewer_facility(auth: &Auth) -> Option<&str> {
+    match auth {
+        Auth::Anonymous => None,
+        Auth::Key { facility, .. } => facility.as_deref(),
+    }
+}
+
 /// Custom `String` type for endpoint payloads.
 pub fn non_empty_string<'de, D>(deserializer: D) -> Result<String, D::Error>
 where

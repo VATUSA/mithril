@@ -4,15 +4,31 @@ use crate::{
     db::Event,
     middleware::{AuthExtractor, RequireAuth},
     queries::{self, CreateEvent, UpdateEvent},
-    shared::{AppError, AppState, can_view_unapproved, determine_facility},
+    shared::{AppError, AppState, can_view_unapproved, determine_facility, viewer_facility},
 };
 use axum::{
     Json,
-    extract::{self, Path, State},
+    extract::{self, Path, Query, State},
+    response::{AppendHeaders, IntoResponse},
 };
 use http::StatusCode;
+use serde::Deserialize;
 use std::sync::Arc;
 use utoipa_axum::{router::OpenApiRouter, routes};
+
+/// Default number of events returned per page when `count` is omitted.
+const DEFAULT_PAGE_COUNT: u32 = 25;
+/// Maximum number of events that can be requested per page.
+const MAX_PAGE_COUNT: u32 = 100;
+
+/// Query parameters for paginating the events list.
+#[derive(Debug, Deserialize)]
+struct EventsQuery {
+    /// 1-indexed page number. Defaults to 1.
+    page: Option<u32>,
+    /// Number of events per page. Defaults to 25, capped at 100.
+    count: Option<u32>,
+}
 
 /// Register routes.
 pub fn router(state: Arc<AppState>) -> OpenApiRouter {
@@ -23,10 +39,19 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
 }
 
 /// Retrieve events
+///
+/// Supports optional pagination via the `page` (1-indexed, default 1) and
+/// `count` (default 25, max 100) querystring parameters. When either is
+/// present, the response includes `X-Total-Count` (total matching events)
+/// and `X-Total-Pages` headers; the response body remains a plain array.
 #[utoipa::path(
     get,
     path = "/",
     tag = "events",
+    params(
+        ("page" = Option<u32>, Query, description = "1-indexed page number, default 1"),
+        ("count" = Option<u32>, Query, description = "Events per page, default 25, max 100")
+    ),
     responses(
         (status = 200, description = "Posted events", body = [Event]),
         (status = 500, description = "Server error")
@@ -34,18 +59,29 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
 )]
 async fn get_events(
     auth: AuthExtractor,
+    Query(pagination): Query<EventsQuery>,
     State(state): State<Arc<AppState>>,
-) -> Result<Json<Vec<Event>>, AppError> {
-    let events = queries::get_events(&state.cobalt_db).await?;
-    let events = events
-        .iter()
-        .filter(|e| {
-            e.review_status.as_deref().unwrap_or_default() == "approved"
-                || can_view_unapproved(&auth.0, &e.facility)
-        })
-        .cloned()
-        .collect();
-    Ok(Json(events))
+) -> Result<impl IntoResponse, AppError> {
+    let facility = viewer_facility(&auth.0);
+    let count = pagination
+        .count
+        .unwrap_or(DEFAULT_PAGE_COUNT)
+        .clamp(1, MAX_PAGE_COUNT);
+    let page = pagination.page.unwrap_or(1).max(1);
+    let offset = page.saturating_sub(1).saturating_mul(count);
+
+    let events = queries::get_events(&state.cobalt_db, facility, count, offset).await?;
+    let total = queries::count_events(&state.cobalt_db, facility).await?;
+    let total = u32::try_from(total).unwrap_or(u32::MAX);
+    let total_pages = total.div_ceil(count).max(1);
+
+    Ok((
+        AppendHeaders([
+            ("X-Total-Count", total.to_string()),
+            ("X-Total-Pages", total_pages.to_string()),
+        ]),
+        Json(events),
+    ))
 }
 
 /// Retrieve a single event

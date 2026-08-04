@@ -123,12 +123,46 @@ pub async fn delete_news_post(db: &MySqlPool, id: i32) -> Result<(), AppError> {
 // event
 // ---------------------------------------------------
 
-/// Get all `event` rows.
-pub async fn get_events(db: &MySqlPool) -> Result<Vec<Event>, AppError> {
-    let events = sqlx::query_as!(Event, "SELECT * FROM event")
-        .fetch_all(db)
-        .await?;
+/// Get a page of `event` rows, ordered by start time.
+///
+/// An event is visible if it is approved, or if `viewer_facility` is "ZHQ"
+/// or matches the event's owning facility (mirrors `can_view_unapproved`).
+/// Pass `None` for an anonymous/unauthenticated caller, who can only see
+/// approved events.
+pub async fn get_events(
+    db: &MySqlPool,
+    viewer_facility: Option<&str>,
+    limit: u32,
+    offset: u32,
+) -> Result<Vec<Event>, AppError> {
+    let events = sqlx::query_as!(
+        Event,
+        r#"SELECT * FROM event
+        WHERE review_status = 'approved' OR ? = 'ZHQ' OR facility = ?
+        ORDER BY start_time ASC
+        LIMIT ? OFFSET ?"#,
+        viewer_facility,
+        viewer_facility,
+        limit,
+        offset
+    )
+    .fetch_all(db)
+    .await?;
     Ok(events)
+}
+
+/// Count the `event` rows visible to `viewer_facility`, using the same
+/// visibility rule as [`get_events`].
+pub async fn count_events(db: &MySqlPool, viewer_facility: Option<&str>) -> Result<i64, AppError> {
+    let total = sqlx::query_scalar!(
+        r#"SELECT COUNT(*) FROM event
+        WHERE review_status = 'approved' OR ? = 'ZHQ' OR facility = ?"#,
+        viewer_facility,
+        viewer_facility
+    )
+    .fetch_one(db)
+    .await?;
+    Ok(total)
 }
 
 /// Get a single `event` row.
