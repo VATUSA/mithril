@@ -37,6 +37,7 @@ This app follows all [Clippy](https://doc.rust-lang.org/clippy/) lints on _Night
 ### Environment Variables
 
 - `DISABLE_ROSTER_POLLER`: Set to `true` or `1` to disable the roster change poller background task. By default, the poller runs and periodically syncs roster changes. Set this to disable polling in development or testing scenarios.
+- `DB_MAX_CONNECTIONS`: Maximum number of connections in each database pool (`vatusa_db` and `cobalt_db`). Defaults to `5` if unset or invalid.
 
 ## Integration testing
 

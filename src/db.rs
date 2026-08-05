@@ -16,23 +16,44 @@
 use crate::shared::AppError;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use serde::Serialize;
+use sqlx::mysql::MySqlPoolOptions;
 use sqlx::{FromRow, MySqlPool};
 use std::env;
 use utoipa::ToSchema;
 
+/// Default maximum connection pool size, used when `DB_MAX_CONNECTIONS` is unset or invalid.
+const DEFAULT_MAX_CONNECTIONS: u32 = 5;
+
+/// Read the `DB_MAX_CONNECTIONS` environment variable, falling back to the default on
+/// missing or non-numeric values.
+fn max_connections() -> u32 {
+    env::var("DB_MAX_CONNECTIONS")
+        .ok()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(DEFAULT_MAX_CONNECTIONS)
+}
+
 /// Get a connection pool to the `vatusa-old` database.
 ///
-/// Reads from the `DATABASE_URL_VATUSA` environment variable.
+/// Reads from the `DATABASE_URL_VATUSA` environment variable. Pool size is controlled by
+/// `DB_MAX_CONNECTIONS` (default 5).
 pub async fn connect_vatusa() -> Result<MySqlPool, AppError> {
-    let pool = MySqlPool::connect(&env::var("DATABASE_URL_VATUSA")?).await?;
+    let pool = MySqlPoolOptions::new()
+        .max_connections(max_connections())
+        .connect(&env::var("DATABASE_URL_VATUSA")?)
+        .await?;
     Ok(pool)
 }
 
 /// Get a connection pool to the `cobalt` database.
 ///
-/// Reads from the `DATABASE_URL_COBALT` environment variable.
+/// Reads from the `DATABASE_URL_COBALT` environment variable. Pool size is controlled by
+/// `DB_MAX_CONNECTIONS` (default 5).
 pub async fn connect_cobalt() -> Result<MySqlPool, AppError> {
-    let pool = MySqlPool::connect(&env::var("DATABASE_URL_COBALT")?).await?;
+    let pool = MySqlPoolOptions::new()
+        .max_connections(max_connections())
+        .connect(&env::var("DATABASE_URL_COBALT")?)
+        .await?;
     Ok(pool)
 }
 
