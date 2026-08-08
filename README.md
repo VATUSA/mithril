@@ -39,7 +39,13 @@ This app follows all [Clippy](https://doc.rust-lang.org/clippy/) lints on _Night
 - `DISABLE_ROSTER_POLLER`: Set to `true` or `1` to disable the roster change poller background task. By default, the poller runs and periodically syncs roster changes. Set this to disable polling in development or testing scenarios.
 - `DB_MAX_CONNECTIONS`: Maximum number of connections in each database pool (`vatusa_db` and `cobalt_db`). Defaults to `5` if unset or invalid.
 
-## Integration testing
+## Enforced quality
+
+Rust allows us to enforce quality much earlier on in the development cycle than other languages. For one: the program has to compile, satisfying the notoriously picky Rust compiler. Second, the [clippy](<https://github.com/rust-lang/rust-clippy>) tool enforces many additional lints to not only correct potentially bad code but to also enforce good habits. No [unsafe](<https://doc.rust-lang.org/std/keyword.unsafe.html>) code is allowed in this project. Next, the [library used](<https://crates.io/crates/sqlx>) for the database connection is ran in a mode that verifies queries at **compile time** against an actual running database (or the cached verified files of that process). Finally, integration tests with code coverage exercise the actual (local) E2E functionality with a really database via Docker.
+
+All of these processes will be enforced at all times.
+
+### Integration testing
 
 Integration tests use [Hurl](https://hurl.dev/) to exercise the running HTTP API against
 an ephemeral, schema-only MySQL instance (no JVM, no test code to maintain).
@@ -54,7 +60,7 @@ This builds the app image, brings up `docker-compose.test.yml` (MySQL seeded fro
 database. See `tests/fixtures/` for the schema dumps and seed data, and `tests/hurl/`
 for the test scenarios.
 
-## Code coverage
+### Code coverage
 
 Combined unit + integration test coverage, via [cargo-llvm-cov](https://github.com/taiki-e/cargo-llvm-cov):
 
