@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT COUNT(*) FROM event\n        WHERE review_status = 'approved' OR ? = 'ZHQ' OR facility = ?",
+  "query": "SELECT COUNT(*) FROM event\n        WHERE (review_status = 'approved' OR ? = 'ZHQ' OR facility = ?)\n        AND (? IS NULL OR start_time >= ?)\n        AND (? IS NULL OR start_time < ?)",
   "describe": {
     "columns": [
       {
@@ -16,11 +16,11 @@
       }
     ],
     "parameters": {
-      "Right": 2
+      "Right": 6
     },
     "nullable": [
       false
     ]
   },
-  "hash": "84e9695bb8fdaa8e5b5c2d2a03ddc738d8d3930a443ac6a643b306196781b060"
+  "hash": "4d1fd8e4d2c30e806c6d39b616a5a911661fe31ddc90ce8dae0afe9c8f3403df"
 }

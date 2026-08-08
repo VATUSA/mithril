@@ -11,6 +11,7 @@ use axum::{
     extract::{self, Path, Query, State},
     response::{AppendHeaders, IntoResponse},
 };
+use chrono::NaiveDate;
 use http::StatusCode;
 use serde::Deserialize;
 use std::sync::Arc;
@@ -21,13 +22,30 @@ const DEFAULT_PAGE_COUNT: u32 = 25;
 /// Maximum number of events that can be requested per page.
 const MAX_PAGE_COUNT: u32 = 100;
 
-/// Query parameters for paginating the events list.
+/// Query parameters for paginating and filtering the events list.
 #[derive(Debug, Deserialize)]
 struct EventsQuery {
     /// 1-indexed page number. Defaults to 1.
     page: Option<u32>,
     /// Number of events per page. Defaults to 25, capped at 100.
     count: Option<u32>,
+    /// Only include events starting on or after this UTC date (YYYY-MM-DD).
+    start_date_from: Option<String>,
+    /// Only include events starting on or before this UTC date (YYYY-MM-DD).
+    start_date_to: Option<String>,
+}
+
+/// Parse a `YYYY-MM-DD` querystring date as a UTC calendar day and return the
+/// unix-epoch timestamp of its midnight (`00:00:00 UTC`).
+fn parse_utc_date_start(s: &str) -> Result<i64, AppError> {
+    let date = NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|_| {
+        AppError::BadRequest("start_date_from/start_date_to must be in YYYY-MM-DD format")
+    })?;
+    Ok(date
+        .and_hms_opt(0, 0, 0)
+        .expect("midnight is always a valid time")
+        .and_utc()
+        .timestamp())
 }
 
 /// Register routes.
@@ -40,8 +58,12 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
 
 /// Retrieve events
 ///
-/// Supports optional pagination via the `page` (1-indexed, default 1) and
-/// `count` (default 25, max 100) querystring parameters. When either is
+/// Results are paginated via `page` (1-indexed, default 1) and `count`
+/// (default 25, max 100), and can be narrowed to a range of start dates via
+/// `start_date_from` and `start_date_to` (`YYYY-MM-DD`, inclusive, UTC
+/// calendar days). Since VATUSA events are scheduled by the UTC day they
+/// start on, even when they run past midnight UTC into the next calendar
+/// day, filtering is based on `start_time` alone. When `page` or `count` is
 /// present, the response includes `X-Total-Count` (total matching events)
 /// and `X-Total-Pages` headers; the response body remains a plain array.
 #[utoipa::path(
@@ -50,28 +72,58 @@ pub fn router(state: Arc<AppState>) -> OpenApiRouter {
     tag = "events",
     params(
         ("page" = Option<u32>, Query, description = "1-indexed page number, default 1"),
-        ("count" = Option<u32>, Query, description = "Events per page, default 25, max 100")
+        ("count" = Option<u32>, Query, description = "Events per page, default 25, max 100"),
+        ("start_date_from" = Option<String>, Query, description = "Only include events starting on/after this UTC date (YYYY-MM-DD)"),
+        ("start_date_to" = Option<String>, Query, description = "Only include events starting on/before this UTC date (YYYY-MM-DD)")
     ),
     responses(
         (status = 200, description = "Posted events", body = [Event]),
+        (status = 400, description = "Malformed start_date_from/start_date_to"),
         (status = 500, description = "Server error")
     )
 )]
 async fn get_events(
     auth: AuthExtractor,
-    Query(pagination): Query<EventsQuery>,
+    Query(filtering): Query<EventsQuery>,
     State(state): State<Arc<AppState>>,
 ) -> Result<impl IntoResponse, AppError> {
     let facility = viewer_facility(&auth.0);
-    let count = pagination
+    let count = filtering
         .count
         .unwrap_or(DEFAULT_PAGE_COUNT)
         .clamp(1, MAX_PAGE_COUNT);
-    let page = pagination.page.unwrap_or(1).max(1);
+    let page = filtering.page.unwrap_or(1).max(1);
     let offset = page.saturating_sub(1).saturating_mul(count);
 
-    let events = queries::get_events(&state.cobalt_db, facility, count, offset).await?;
-    let total = queries::count_events(&state.cobalt_db, facility).await?;
+    let start_from = filtering
+        .start_date_from
+        .as_deref()
+        .map(parse_utc_date_start)
+        .transpose()?;
+    let start_to = filtering
+        .start_date_to
+        .as_deref()
+        .map(parse_utc_date_start)
+        .transpose()?
+        .map(|ts| ts + 86400);
+    if let (Some(from), Some(to)) = (start_from, start_to)
+        && from >= to
+    {
+        return Err(AppError::BadRequest(
+            "start_date_from must not be after start_date_to",
+        ));
+    }
+
+    let events = queries::get_events(
+        &state.cobalt_db,
+        facility,
+        start_from,
+        start_to,
+        count,
+        offset,
+    )
+    .await?;
+    let total = queries::count_events(&state.cobalt_db, facility, start_from, start_to).await?;
     let total = u32::try_from(total).unwrap_or(u32::MAX);
     let total_pages = total.div_ceil(count).max(1);
 

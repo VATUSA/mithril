@@ -1,6 +1,6 @@
 {
   "db_name": "MySQL",
-  "query": "SELECT * FROM event\n        WHERE review_status = 'approved' OR ? = 'ZHQ' OR facility = ?\n        ORDER BY start_time ASC\n        LIMIT ? OFFSET ?",
+  "query": "SELECT * FROM event\n        WHERE (review_status = 'approved' OR ? = 'ZHQ' OR facility = ?)\n        AND (? IS NULL OR start_time >= ?)\n        AND (? IS NULL OR start_time < ?)\n        ORDER BY start_time ASC\n        LIMIT ? OFFSET ?",
   "describe": {
     "columns": [
       {
@@ -229,7 +229,7 @@
       }
     ],
     "parameters": {
-      "Right": 4
+      "Right": 8
     },
     "nullable": [
       false,
@@ -248,5 +248,5 @@
       true
     ]
   },
-  "hash": "9bea5fde07dedb51e491c3f7b09def6f12505700a513fb29fe695c8fd81eaded"
+  "hash": "7a676965c37245d3aeb8eff8cb3bf1df349b24a651bf678e443b9ca4bd738a98"
 }

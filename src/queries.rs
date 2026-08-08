@@ -129,20 +129,32 @@ pub async fn delete_news_post(db: &MySqlPool, id: i32) -> Result<(), AppError> {
 /// or matches the event's owning facility (mirrors `can_view_unapproved`).
 /// Pass `None` for an anonymous/unauthenticated caller, who can only see
 /// approved events.
+///
+/// `start_from` and `start_to` are optional inclusive-lower/exclusive-upper
+/// unix-epoch bounds on `start_time`; pass `None` to leave a bound open.
+#[allow(clippy::too_many_arguments)]
 pub async fn get_events(
     db: &MySqlPool,
     viewer_facility: Option<&str>,
+    start_from: Option<i64>,
+    start_to: Option<i64>,
     limit: u32,
     offset: u32,
 ) -> Result<Vec<Event>, AppError> {
     let events = sqlx::query_as!(
         Event,
         r#"SELECT * FROM event
-        WHERE review_status = 'approved' OR ? = 'ZHQ' OR facility = ?
+        WHERE (review_status = 'approved' OR ? = 'ZHQ' OR facility = ?)
+        AND (? IS NULL OR start_time >= ?)
+        AND (? IS NULL OR start_time < ?)
         ORDER BY start_time ASC
         LIMIT ? OFFSET ?"#,
         viewer_facility,
         viewer_facility,
+        start_from,
+        start_from,
+        start_to,
+        start_to,
         limit,
         offset
     )
@@ -152,13 +164,24 @@ pub async fn get_events(
 }
 
 /// Count the `event` rows visible to `viewer_facility`, using the same
-/// visibility rule as [`get_events`].
-pub async fn count_events(db: &MySqlPool, viewer_facility: Option<&str>) -> Result<i64, AppError> {
+/// visibility rule and optional `start_time` bounds as [`get_events`].
+pub async fn count_events(
+    db: &MySqlPool,
+    viewer_facility: Option<&str>,
+    start_from: Option<i64>,
+    start_to: Option<i64>,
+) -> Result<i64, AppError> {
     let total = sqlx::query_scalar!(
         r#"SELECT COUNT(*) FROM event
-        WHERE review_status = 'approved' OR ? = 'ZHQ' OR facility = ?"#,
+        WHERE (review_status = 'approved' OR ? = 'ZHQ' OR facility = ?)
+        AND (? IS NULL OR start_time >= ?)
+        AND (? IS NULL OR start_time < ?)"#,
         viewer_facility,
-        viewer_facility
+        viewer_facility,
+        start_from,
+        start_from,
+        start_to,
+        start_to
     )
     .fetch_one(db)
     .await?;
