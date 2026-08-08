@@ -142,7 +142,7 @@ pub trait HasFacility {
 /// ZHQ keys can set the facility but fall back to "ZHQ"; non-ZHQ
 /// keys can _only_ use the facility tied to the key, if any. If
 /// the key does not have a facility, an error is returned.
-pub fn determine_facility(auth: &RequireAuth, data: impl HasFacility) -> Result<String, AppError> {
+pub fn determine_facility(auth: &RequireAuth, data: &impl HasFacility) -> Result<String, AppError> {
     match auth.facility.as_deref() {
         Some("ZHQ") => Ok(data
             .facility()

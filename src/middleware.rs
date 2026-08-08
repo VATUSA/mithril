@@ -1,3 +1,7 @@
+//! Middleware.
+
+#![allow(clippy::unused_async_trait_impl)]
+
 use crate::shared::{AppError, AppState, Auth};
 use axum::{
     extract::{FromRequestParts, Request, State},

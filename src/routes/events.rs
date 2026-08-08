@@ -156,11 +156,8 @@ async fn get_single_event(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Event>, AppError> {
     let event = queries::get_event(&state.cobalt_db, id).await?;
-    let event = match event {
-        Some(e) => e,
-        None => {
-            return Err(AppError::NotFound("event not found"));
-        }
+    let Some(event) = event else {
+        return Err(AppError::NotFound("event not found"));
     };
     if event.review_status.as_deref().unwrap_or_default() != "approved"
         && !can_view_unapproved(&auth.0, &event.facility)
@@ -251,11 +248,8 @@ async fn update_event(
     extract::Json(data): extract::Json<UpdateEvent>,
 ) -> Result<StatusCode, AppError> {
     let event = queries::get_event(&state.cobalt_db, id).await?;
-    let event = match event {
-        Some(e) => e,
-        None => {
-            return Err(AppError::NotFound("event not found"));
-        }
+    let Some(event) = event else {
+        return Err(AppError::NotFound("event not found"));
     };
     let facility = determine_facility(&auth, &data)?;
     if event.facility != facility && facility != "ZHQ" {
@@ -309,11 +303,8 @@ async fn delete_event(
     auth: RequireAuth,
 ) -> Result<StatusCode, AppError> {
     let event = queries::get_event(&state.cobalt_db, id).await?;
-    let event = match event {
-        Some(e) => e,
-        None => {
-            return Err(AppError::NotFound("event not found"));
-        }
+    let Some(event) = event else {
+        return Err(AppError::NotFound("event not found"));
     };
     let facility = auth.facility.as_deref().unwrap_or_default();
     if event.facility != facility && facility != "ZHQ" {

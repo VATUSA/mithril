@@ -224,6 +224,12 @@ impl HasFacility for &CreateEvent {
     }
 }
 
+impl HasFacility for CreateEvent {
+    fn facility(&self) -> Option<String> {
+        self.facility.clone()
+    }
+}
+
 /// Create a new `event` row.
 pub async fn create_event(
     db: &MySqlPool,
@@ -274,6 +280,12 @@ pub struct UpdateEvent {
 }
 
 impl HasFacility for &UpdateEvent {
+    fn facility(&self) -> Option<String> {
+        self.facility.clone()
+    }
+}
+
+impl HasFacility for UpdateEvent {
     fn facility(&self) -> Option<String> {
         self.facility.clone()
     }
@@ -407,6 +419,12 @@ pub struct CreateWebhook {
 }
 
 impl HasFacility for &CreateWebhook {
+    fn facility(&self) -> Option<String> {
+        None
+    }
+}
+
+impl HasFacility for CreateWebhook {
     fn facility(&self) -> Option<String> {
         None
     }

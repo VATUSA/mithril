@@ -43,7 +43,7 @@ This app follows all [Clippy](https://doc.rust-lang.org/clippy/) lints on _Night
 
 Rust allows us to enforce quality much earlier on in the development cycle than other languages. For one: the program has to compile, satisfying the notoriously picky Rust compiler. Second, the [clippy](<https://github.com/rust-lang/rust-clippy>) tool enforces many additional lints to not only correct potentially bad code but to also enforce good habits. No [unsafe](<https://doc.rust-lang.org/std/keyword.unsafe.html>) code is allowed in this project. Next, the [library used](<https://crates.io/crates/sqlx>) for the database connection is ran in a mode that verifies queries at **compile time** against an actual running database (or the cached verified files of that process). Finally, integration tests with code coverage exercise the actual (local) E2E functionality with a really database via Docker.
 
-All of these processes will be enforced at all times.
+All of these processes will be enforced at all times with the exceptions of code that is not yet implemented or specific pedantic clippy lints.
 
 ### Integration testing
 

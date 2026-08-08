@@ -11,6 +11,7 @@
 //!
 //! This module contains the DB connection functions and DB models.
 
+#![allow(clippy::struct_excessive_bools, clippy::struct_field_names)]
 #![allow(unused)]
 
 use crate::shared::AppError;

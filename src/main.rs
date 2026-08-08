@@ -1,7 +1,7 @@
 //! VATUSA API.
 
-#![deny(clippy::all)]
-#![deny(unsafe_code)]
+#![deny(unsafe_code, clippy::all, clippy::pedantic)]
+#![allow(clippy::if_not_else)]
 
 use crate::{
     db::{connect_cobalt, connect_vatusa},
@@ -28,7 +28,7 @@ mod queries;
 mod routes;
 mod shared;
 
-const API_DESCRIPTION: &str = r#"VATUSA API.
+const API_DESCRIPTION: &str = r"VATUSA API.
 
 This API is primarily for VATUSA ARTCCs to be able to interact with the VATUSA
 site programmatically. Some routes do not require an API key that facilities have;
@@ -42,7 +42,7 @@ allows calling without a key. Some public methods will return additional data wh
 an API key is included in the request.
 
 This documentation is generated from the code and should always be up to date.
-"#;
+";
 
 /// VATUSA API v3.
 
@@ -166,7 +166,7 @@ async fn health() -> &'static str {
     "ok"
 }
 
-/// Return JSON version of an OpenAPI schema
+/// Return JSON version of an `OpenAPI` schema
 #[utoipa::path(
     get,
     path = "/swagger.json",
@@ -218,9 +218,10 @@ async fn main() -> Result<()> {
         .fallback(routes::fallback)
         .split_for_parts();
     prefix_paths(&mut api);
-    if OPENAPI_DOC.set(api.clone()).is_err() {
-        panic!("openapi doc set exactly once at startup");
-    }
+    assert!(
+        OPENAPI_DOC.set(api.clone()).is_ok(),
+        "openapi doc set exactly once at startup"
+    );
 
     let app = app.merge(Redoc::with_url("/", api)).layer(
         ServiceBuilder::new()
@@ -238,20 +239,18 @@ async fn main() -> Result<()> {
 
     let shutdown_rx = install_shutdown_handler()?;
 
-    let poller_handle = if std::env::var("DISABLE_ROSTER_POLLER")
-        .map(|v| v.to_lowercase() == "true")
-        .unwrap_or(false)
-    {
-        tracing::info!("roster poll task disabled via DISABLE_ROSTER_POLLER");
-        None
-    } else {
-        tracing::info!("starting roster poll task");
-        Some(tokio::spawn(change_poller::run(
-            app_state.vatusa_db.clone(),
-            app_state.cobalt_db.clone(),
-            shutdown_signal(shutdown_rx.clone()),
-        )))
-    };
+    let poller_handle =
+        if std::env::var("DISABLE_ROSTER_POLLER").is_ok_and(|v| v.to_lowercase() == "true") {
+            tracing::info!("roster poll task disabled via DISABLE_ROSTER_POLLER");
+            None
+        } else {
+            tracing::info!("starting roster poll task");
+            Some(tokio::spawn(change_poller::run(
+                app_state.vatusa_db.clone(),
+                app_state.cobalt_db.clone(),
+                shutdown_signal(shutdown_rx.clone()),
+            )))
+        };
 
     let host_and_port = format!("{}:{}", cli.host, cli.port);
     tracing::info!("listening on http://{host_and_port}/");

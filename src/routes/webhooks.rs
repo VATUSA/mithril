@@ -138,13 +138,9 @@ async fn delete_webhook(
     State(state): State<Arc<AppState>>,
     auth: RequireAuth,
 ) -> Result<StatusCode, AppError> {
-    // let facility = auth.facility.as_deref().unwrap_or_default();
     let webhook = queries::get_webhook(&state.cobalt_db, id).await?;
-    let webhook = match webhook {
-        Some(w) => w,
-        None => {
-            return Err(AppError::NotFound("webhook not found"));
-        }
+    let Some(webhook) = webhook else {
+        return Err(AppError::NotFound("webhook not found"));
     };
     if webhook.facility.as_deref() != auth.facility.as_deref() {
         tracing::info!(

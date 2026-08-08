@@ -1,5 +1,7 @@
 //! API routes.
 
+#![allow(clippy::unused_async)]
+
 pub mod academy;
 pub mod events;
 pub mod facility;

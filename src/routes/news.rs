@@ -121,7 +121,7 @@ async fn create_news(
         tracing::debug!(
             "testing key {} used on create news post endpoint",
             auth.key_id
-        )
+        );
     }
     Ok(StatusCode::CREATED)
 }
@@ -157,11 +157,8 @@ async fn update_news(
 ) -> Result<StatusCode, AppError> {
     // ensure news post exists
     let news = queries::get_news_post(&state.cobalt_db, id).await?;
-    let news = match news {
-        Some(n) => n,
-        None => {
-            return Err(AppError::NotFound("news post not found"));
-        }
+    let Some(news) = news else {
+        return Err(AppError::NotFound("news post not found"));
     };
     // validate data.author_cid in key's facility
     let facility = auth
@@ -217,11 +214,8 @@ async fn delete_news(
 ) -> Result<StatusCode, AppError> {
     // ensure news post exists
     let news = queries::get_news_post(&state.cobalt_db, id).await?;
-    let news = match news {
-        Some(n) => n,
-        None => {
-            return Err(AppError::NotFound("news post not found"));
-        }
+    let Some(news) = news else {
+        return Err(AppError::NotFound("news post not found"));
     };
     // validate data.author_cid in key's facility
     let facility = auth

@@ -27,14 +27,14 @@ pub async fn run(
         .expect("failed to build webhook delivery HTTP client");
 
     let mut ticker = interval(Duration::from_secs(15));
-    let mut cleanup_ticker = interval(Duration::from_secs(60 * 60));
+    let mut cleanup_ticker = interval(Duration::from_hours(1));
     tokio::pin!(shutdown);
 
     // sleep for startup, but stay interruptible: a shutdown arriving during
     // this window must not be deferred until the sleep elapses.
     tokio::select! {
-        _ = tokio::time::sleep(Duration::from_secs(5)) => {}
-        _ = &mut shutdown => {
+        () = tokio::time::sleep(Duration::from_secs(5)) => {}
+        () = &mut shutdown => {
             tracing::warn!("change_poller shutting down during startup");
             return;
         }
@@ -52,7 +52,7 @@ pub async fn run(
                     tracing::error!("change_poller cleanup error: {e}");
                 }
             }
-            _ = &mut shutdown => {
+            () = &mut shutdown => {
                 tracing::warn!("change_poller shutting down");
                 break;
             }
@@ -78,13 +78,11 @@ async fn poll_once(
             change
                 .old_value
                 .as_ref()
-                .map(|v| v.to_string())
-                .unwrap_or_else(|| "null".into()),
+                .map_or_else(|| "null".into(), std::string::ToString::to_string),
             change
                 .new_value
                 .as_ref()
-                .map(|v| v.to_string())
-                .unwrap_or_else(|| "null".into()),
+                .map_or_else(|| "null".into(), std::string::ToString::to_string)
         );
 
         for facility in target_facilities(&change) {
