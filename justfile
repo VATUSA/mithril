@@ -12,7 +12,7 @@ docker-run:
 test-integration:
     docker build -t localhost/mithril .
     docker compose -f docker-compose.test.yml up -d --wait
-    hurl --test --retry 5 --retry-interval 1000 tests/hurl/*.hurl; \
+    hurl --test --file-root tests --retry 5 --retry-interval 1000 tests/hurl/*.hurl; \
     status=$?; \
     docker compose -f docker-compose.test.yml down -v; \
     exit $status
@@ -26,6 +26,7 @@ test-coverage:
     set -euo pipefail
     cargo llvm-cov clean --workspace
     docker compose -f docker-compose.test.yml up -d mysql --wait
+    docker compose -f docker-compose.test.yml up minio-init
 
     APP_PID=""
 
@@ -54,6 +55,13 @@ test-coverage:
 
     export DATABASE_URL_VATUSA="mysql://root:password@localhost:3306/combined?ssl-mode=disabled"
     export DATABASE_URL_COBALT="mysql://root:password@localhost:3306/combined?ssl-mode=disabled"
+    export DO_SPACES_KEY="mithril-test"
+    export DO_SPACES_SECRET="mithril-test-secret"
+    export DO_SPACES_BUCKET="vatusa-events-test"
+    export DO_SPACES_REGION="us-east-1"
+    export DO_SPACES_ENDPOINT="http://localhost:9000"
+    export DO_SPACES_PUBLIC_BASE_URL="http://localhost:9000/vatusa-events-test"
+    export DO_SPACES_PATH_STYLE="true"
 
     # Compile up front so the readiness wait below times a starting process
     # rather than a build.
@@ -79,7 +87,7 @@ test-coverage:
     curl -sf -o /dev/null http://localhost:4000/health \
         || { echo "app never became ready" >&2; exit 1; }
 
-    hurl --test --retry 5 --retry-interval 1000 tests/hurl/*.hurl
+    hurl --test --file-root tests --retry 5 --retry-interval 1000 tests/hurl/*.hurl
 
     kill -TERM "$APP_PID"
     wait_for_exit "$APP_PID" \

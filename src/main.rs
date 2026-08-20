@@ -1,7 +1,7 @@
 //! VATUSA API.
 
 #![deny(unsafe_code, clippy::all, clippy::pedantic)]
-#![allow(clippy::if_not_else)]
+#![allow(clippy::if_not_else, clippy::doc_markdown)]
 
 use crate::{
     db::{connect_cobalt, connect_vatusa},
@@ -27,6 +27,7 @@ mod middleware;
 mod queries;
 mod routes;
 mod shared;
+mod storage;
 
 const API_DESCRIPTION: &str = r"VATUSA API.
 
@@ -143,7 +144,7 @@ impl Modify for SecurityAddon {
 /// Prefixes every documented path with `/v3` so Redoc's sidebar/operation
 /// headings match the public URL, even though the ingress strips that
 /// segment before requests reach this app. Must run on the fully-merged
-/// `OpenApi` doc (after `split_for_parts`), since path items are only
+/// OpenApi doc (after `split_for_parts`), since path items are only
 /// added to it as each router's `routes!()` is composed.
 fn prefix_paths(openapi: &mut utoipa::openapi::OpenApi) {
     let paths = std::mem::take(&mut openapi.paths.paths);
@@ -203,6 +204,7 @@ async fn main() -> Result<()> {
     let app_state = Arc::new(shared::AppState {
         vatusa_db: connect_vatusa().await.context("vatusa db")?,
         cobalt_db: connect_cobalt().await.context("cobalt db")?,
+        storage: storage::EventBannerStorage::connect().context("object storage")?,
     });
     tracing::debug!("connected");
 

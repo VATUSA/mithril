@@ -15,6 +15,8 @@ pub struct AppState {
     pub vatusa_db: MySqlPool,
     /// Connection to the new VATUSA backend DB
     pub cobalt_db: MySqlPool,
+    /// Object storage client for event banners.
+    pub storage: crate::storage::EventBannerStorage,
 }
 
 /// App errors, broken down into enum variants for the various
@@ -39,6 +41,9 @@ pub enum AppError {
 
     #[error("route not found")]
     RouteNotFound,
+
+    #[error("storage error")]
+    Storage(#[from] s3::error::S3Error),
 
     #[error("{0}")]
     BadRequest(&'static str),
@@ -69,7 +74,7 @@ impl AppError {
             Self::InsufficientPermissions => StatusCode::FORBIDDEN,
             Self::BadRequest(_) | Self::JsonProcessingError(_) => StatusCode::BAD_REQUEST,
             Self::NotFound(_) | Self::RouteNotFound => StatusCode::NOT_FOUND,
-            Self::Database(_) | Self::EnvVarError(_) | Self::Internal(_) => {
+            Self::Database(_) | Self::EnvVarError(_) | Self::Internal(_) | Self::Storage(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }
         }
@@ -86,6 +91,7 @@ impl AppError {
             Self::Database(_) => "database_error",
             Self::EnvVarError(_) => "config_error",
             Self::Internal(_) => "internal_error",
+            Self::Storage(_) => "storage_error",
         }
     }
 
@@ -94,6 +100,7 @@ impl AppError {
         match self {
             Self::Database(_) => "A database error occurred".to_string(),
             Self::EnvVarError(_) => "Server configuration error".to_string(),
+            Self::Storage(_) => "A storage error occurred".to_string(),
             _ => self.to_string(),
         }
     }

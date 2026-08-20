@@ -5,10 +5,11 @@ use crate::{
     middleware::{AuthExtractor, RequireAuth},
     queries::{self, CreateEvent, UpdateEvent},
     shared::{AppError, AppState, can_view_unapproved, determine_facility, viewer_facility},
+    storage,
 };
 use axum::{
     Json,
-    extract::{self, Path, Query, State},
+    extract::{FromRequest, Multipart, Path, Query, Request, State},
     response::{AppendHeaders, IntoResponse},
 };
 use chrono::NaiveDate;
@@ -16,6 +17,98 @@ use http::StatusCode;
 use serde::Deserialize;
 use std::sync::Arc;
 use utoipa_axum::{router::OpenApiRouter, routes};
+
+const BANNER_FIELD: &str = "banner_image";
+
+/// Raw fields parsed out of a `multipart/form-data` event create/update body.
+#[derive(Default)]
+struct EventMultipartFields {
+    title: Option<String>,
+    body: Option<String>,
+    banner_image_url: Option<String>,
+    facility: Option<String>,
+    start_time: Option<i64>,
+    end_time: Option<i64>,
+    created_by: Option<i32>,
+    updated_by: Option<i32>,
+    banner_file: Option<Vec<u8>>,
+}
+
+/// Content-Type check.
+fn is_multipart(req: &Request) -> bool {
+    req.headers()
+        .get(http::header::CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|ct| ct.starts_with("multipart/form-data"))
+}
+
+/// Consume a `Multipart` to create a `EventMultipartFields`.
+async fn read_event_multipart(mut multipart: Multipart) -> Result<EventMultipartFields, AppError> {
+    let mut fields = EventMultipartFields::default();
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|_| AppError::BadRequest("malformed multipart body"))?
+    {
+        let Some(name) = field.name().map(str::to_owned) else {
+            continue;
+        };
+        if name == BANNER_FIELD {
+            let bytes = field
+                .bytes()
+                .await
+                .map_err(|_| AppError::BadRequest("malformed multipart body"))?;
+            if !bytes.is_empty() {
+                fields.banner_file = Some(bytes.to_vec());
+            }
+            continue;
+        }
+        let text = field
+            .text()
+            .await
+            .map_err(|_| AppError::BadRequest("malformed multipart body"))?;
+        match name.as_str() {
+            "title" => fields.title = Some(text),
+            "body" => fields.body = Some(text),
+            "banner_image_url" => fields.banner_image_url = Some(text),
+            "facility" if !text.is_empty() => fields.facility = Some(text),
+            "start_time" => {
+                fields.start_time = Some(
+                    text.parse()
+                        .map_err(|_| AppError::BadRequest("start_time must be an integer"))?,
+                );
+            }
+            "end_time" => {
+                fields.end_time = Some(
+                    text.parse()
+                        .map_err(|_| AppError::BadRequest("end_time must be an integer"))?,
+                );
+            }
+            "created_by" => {
+                fields.created_by = Some(
+                    text.parse()
+                        .map_err(|_| AppError::BadRequest("created_by must be an integer"))?,
+                );
+            }
+            "updated_by" => {
+                fields.updated_by = Some(
+                    text.parse()
+                        .map_err(|_| AppError::BadRequest("updated_by must be an integer"))?,
+                );
+            }
+            _ => {}
+        }
+    }
+    Ok(fields)
+}
+
+/// Require a multipart text field to be present and not empty.
+fn require_non_empty(value: Option<String>, message: &'static str) -> Result<String, AppError> {
+    match value {
+        Some(v) if !v.is_empty() => Ok(v),
+        _ => Err(AppError::BadRequest(message)),
+    }
+}
 
 /// Default number of events returned per page when `count` is omitted.
 const DEFAULT_PAGE_COUNT: u32 = 25;
@@ -192,9 +285,47 @@ async fn get_single_event(
 async fn create_event(
     State(state): State<Arc<AppState>>,
     auth: RequireAuth,
-    extract::Json(data): extract::Json<CreateEvent>,
+    req: Request,
 ) -> Result<StatusCode, AppError> {
+    let (mut data, banner_file) = if is_multipart(&req) {
+        let multipart = Multipart::from_request(req, &state)
+            .await
+            .map_err(|_| AppError::BadRequest("malformed multipart body"))?;
+        let fields = read_event_multipart(multipart).await?;
+        let data = CreateEvent {
+            title: require_non_empty(fields.title, "title is required")?,
+            body: require_non_empty(fields.body, "body is required")?,
+            banner_image_url: fields.banner_image_url.unwrap_or_default(),
+            facility: fields.facility,
+            start_time: fields
+                .start_time
+                .ok_or(AppError::BadRequest("start_time is required"))?,
+            end_time: fields
+                .end_time
+                .ok_or(AppError::BadRequest("end_time is required"))?,
+            created_by: fields
+                .created_by
+                .ok_or(AppError::BadRequest("created_by is required"))?,
+        };
+        (data, fields.banner_file)
+    } else {
+        let Json(data) = Json::<CreateEvent>::from_request(req, &state)
+            .await
+            .map_err(|_| AppError::BadRequest("malformed JSON body"))?;
+        (data, None)
+    };
+
     let facility = determine_facility(&auth, &data)?;
+
+    if let Some(bytes) = banner_file {
+        let banner = storage::validate_banner_image(bytes)?;
+        data.banner_image_url = state.storage.upload(&facility, &banner).await?;
+    } else if data.banner_image_url.is_empty() {
+        return Err(AppError::BadRequest(
+            "banner_image_url or banner_image is required",
+        ));
+    }
+
     if !auth.testing {
         let id = queries::create_event(&state.cobalt_db, &data, &facility).await?;
         tracing::info!(
@@ -245,12 +376,41 @@ async fn update_event(
     Path(id): Path<i32>,
     State(state): State<Arc<AppState>>,
     auth: RequireAuth,
-    extract::Json(data): extract::Json<UpdateEvent>,
+    req: Request,
 ) -> Result<StatusCode, AppError> {
     let event = queries::get_event(&state.cobalt_db, id).await?;
     let Some(event) = event else {
         return Err(AppError::NotFound("event not found"));
     };
+
+    let (mut data, banner_file) = if is_multipart(&req) {
+        let multipart = Multipart::from_request(req, &state)
+            .await
+            .map_err(|_| AppError::BadRequest("malformed multipart body"))?;
+        let fields = read_event_multipart(multipart).await?;
+        let data = UpdateEvent {
+            title: require_non_empty(fields.title, "title is required")?,
+            body: require_non_empty(fields.body, "body is required")?,
+            banner_image_url: fields.banner_image_url.unwrap_or_default(),
+            facility: fields.facility,
+            start_time: fields
+                .start_time
+                .ok_or(AppError::BadRequest("start_time is required"))?,
+            end_time: fields
+                .end_time
+                .ok_or(AppError::BadRequest("end_time is required"))?,
+            updated_by: fields
+                .updated_by
+                .ok_or(AppError::BadRequest("updated_by is required"))?,
+        };
+        (data, fields.banner_file)
+    } else {
+        let Json(data) = Json::<UpdateEvent>::from_request(req, &state)
+            .await
+            .map_err(|_| AppError::BadRequest("malformed JSON body"))?;
+        (data, None)
+    };
+
     let facility = determine_facility(&auth, &data)?;
     if event.facility != facility && facility != "ZHQ" {
         tracing::info!(
@@ -260,6 +420,16 @@ async fn update_event(
         );
         return Err(AppError::InsufficientPermissions);
     }
+
+    if let Some(bytes) = banner_file {
+        let banner = storage::validate_banner_image(bytes)?;
+        data.banner_image_url = state.storage.upload(&facility, &banner).await?;
+    } else if data.banner_image_url.is_empty() {
+        // No new file and no URL supplied: keep the event's current banner
+        // rather than nulling it out, mirroring cobalt's edit semantics.
+        data.banner_image_url = event.banner_image_url.clone();
+    }
+
     if !auth.testing {
         queries::update_event(&state.cobalt_db, id, &data, &facility).await?;
         tracing::info!("key {} used to update event {}", auth.key_id, event.id);
