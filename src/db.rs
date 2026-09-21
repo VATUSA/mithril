@@ -17,9 +17,10 @@
 use crate::shared::AppError;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use serde::Serialize;
-use sqlx::mysql::MySqlPoolOptions;
+use sqlx::mysql::{MySqlConnectOptions, MySqlPoolOptions, MySqlSslMode};
 use sqlx::{FromRow, MySqlPool};
 use std::env;
+use std::str::FromStr;
 use utoipa::ToSchema;
 
 /// Default maximum connection pool size, used when `DB_MAX_CONNECTIONS` is unset or invalid.
@@ -34,6 +35,73 @@ fn max_connections() -> u32 {
         .unwrap_or(DEFAULT_MAX_CONNECTIONS)
 }
 
+/// Parse a database URL into connect options, pinning `ssl-mode` to `Disabled`
+/// unless the URL asks for something else.
+///
+/// Compiling sqlx with a TLS feature (needed for Azure Database for MySQL, which
+/// sets `require_secure_transport=ON`) silently changes its default `ssl-mode`
+/// from `Disabled` to `Preferred`. That would make every existing deployment,
+/// production included, start negotiating TLS against DigitalOcean's managed
+/// MySQL on the strength of a dependency change alone.
+///
+/// So the default is pinned back to the old behaviour and TLS becomes opt-in per
+/// environment, by putting `?ssl-mode=verify_identity` (or `required`) in the
+/// URL. This mirrors cobalt's `DB_TLS` switch: same reasoning, same blast radius.
+fn connect_options(url: &str) -> Result<MySqlConnectOptions, AppError> {
+    let options = MySqlConnectOptions::from_str(url)?;
+    if url_sets_ssl_mode(url) {
+        Ok(options)
+    } else {
+        Ok(options.ssl_mode(MySqlSslMode::Disabled))
+    }
+}
+
+/// Whether the URL's query string carries an explicit `ssl-mode` (or `ssl_mode`).
+///
+/// Checked against the raw URL because [`MySqlConnectOptions`] exposes no way to
+/// distinguish "caller asked for Preferred" from "sqlx defaulted to Preferred".
+fn url_sets_ssl_mode(url: &str) -> bool {
+    url.split_once('?')
+        .map(|(_, query)| query)
+        .is_some_and(|query| {
+            query.split('&').any(|pair| {
+                let key = pair
+                    .split('=')
+                    .next()
+                    .unwrap_or_default()
+                    .to_ascii_lowercase();
+                key == "ssl-mode" || key == "ssl_mode"
+            })
+        })
+}
+
+#[cfg(test)]
+mod ssl_mode_tests {
+    use super::url_sets_ssl_mode;
+
+    #[test]
+    fn detects_explicit_ssl_mode() {
+        assert!(url_sets_ssl_mode(
+            "mysql://u:p@h/db?ssl-mode=verify_identity"
+        ));
+        assert!(url_sets_ssl_mode("mysql://u:p@h/db?ssl_mode=required"));
+        assert!(url_sets_ssl_mode(
+            "mysql://u:p@h/db?statement-cache-capacity=0&SSL-MODE=disabled"
+        ));
+    }
+
+    #[test]
+    fn absent_ssl_mode_falls_back_to_disabled() {
+        // The DigitalOcean deployments, production included, pass no ssl-mode.
+        assert!(!url_sets_ssl_mode("mysql://u:p@h/db"));
+        assert!(!url_sets_ssl_mode(
+            "mysql://u:p@h/db?statement-cache-capacity=0"
+        ));
+        // Substring of another key must not count.
+        assert!(!url_sets_ssl_mode("mysql://u:p@h/db?not-ssl-mode=1"));
+    }
+}
+
 /// Get a connection pool to the `vatusa-old` database.
 ///
 /// Reads from the `DATABASE_URL_VATUSA` environment variable. Pool size is controlled by
@@ -41,7 +109,7 @@ fn max_connections() -> u32 {
 pub async fn connect_vatusa() -> Result<MySqlPool, AppError> {
     let pool = MySqlPoolOptions::new()
         .max_connections(max_connections())
-        .connect(&env::var("DATABASE_URL_VATUSA")?)
+        .connect_with(connect_options(&env::var("DATABASE_URL_VATUSA")?)?)
         .await?;
     Ok(pool)
 }
@@ -53,7 +121,7 @@ pub async fn connect_vatusa() -> Result<MySqlPool, AppError> {
 pub async fn connect_cobalt() -> Result<MySqlPool, AppError> {
     let pool = MySqlPoolOptions::new()
         .max_connections(max_connections())
-        .connect(&env::var("DATABASE_URL_COBALT")?)
+        .connect_with(connect_options(&env::var("DATABASE_URL_COBALT")?)?)
         .await?;
     Ok(pool)
 }
