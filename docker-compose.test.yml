@@ -21,7 +21,7 @@ services:
   # with, so readiness is proven by minio-init actually reaching the API
   # (mithril depends on its completion, not on a minio healthcheck).
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     restart: "no"
     command: server /data
     environment:
@@ -32,7 +32,7 @@ services:
 
   # One-shot: wait for minio's API and create the test bucket.
   minio-init:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     restart: "no"
     entrypoint: >
       /bin/sh -c "
