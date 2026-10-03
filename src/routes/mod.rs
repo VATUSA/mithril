@@ -3,6 +3,7 @@
 #![allow(clippy::unused_async)]
 
 pub mod academy;
+pub mod division;
 pub mod events;
 pub mod facility;
 pub mod news;

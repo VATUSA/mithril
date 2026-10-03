@@ -121,6 +121,7 @@ async fn shutdown_signal(mut rx: tokio::sync::watch::Receiver<bool>) {
     tags(
         (name = "events", description = "Network events"),
         (name = "news", description = "Division and facility news"),
+        (name = "division", description = "Division roster and role data"),
         (name = "facility", description = "Division facility data"),
         (name = "webhooks", description = "Outbound webhook registration"),
     )
@@ -215,6 +216,7 @@ async fn main() -> Result<()> {
         .routes(routes!(openapi))
         .nest("/news", routes::news::router(app_state.clone()))
         .nest("/events", routes::events::router(app_state.clone()))
+        .nest("/division", routes::division::router(app_state.clone()))
         .nest("/facility", routes::facility::router(app_state.clone()))
         .nest("/webhooks", routes::webhooks::router(app_state.clone()))
         .fallback(routes::fallback)

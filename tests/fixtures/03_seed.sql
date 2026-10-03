@@ -15,3 +15,15 @@ VALUES ('test-testing-key', 1, 'ZHQ', 'seeded for testing-flag integration tests
 -- (plus anything approved), not every facility's events like a ZHQ key does.
 INSERT INTO `v3_api_key` (`code`, `testing`, `facility`, `notes`, `created_at`)
 VALUES ('test-facility-key', 0, 'ZHU', 'seeded for facility-scoped visibility tests', UNIX_TIMESTAMP());
+
+-- One controller visiting another facility, plus a facility-scoped and a
+-- division-wide role grant, for the /division/controllers dump. The ZZN and
+-- ZAE rows must be left out of that dump.
+INSERT INTO `user` (`cid`, `display_name`, `controller_rating`, `facility`)
+VALUES (1000001, 'Test Controller', 5, 'ZHU'),
+       (1000002, 'Test Non-Member', 1, 'ZZN'),
+       (1000003, 'Test Academy', 1, 'ZAE');
+INSERT INTO `user_visit` (`cid`, `facility`) VALUES (1000001, 'ZJX');
+INSERT INTO `acl_user_role` (`cid`, `facility`, `role`, `grantor_cid`, `granted_at`)
+VALUES (1000001, 'ZHU', 'mentor', 0, 0),
+       (1000001, '*', 'ace_team', 0, 0);

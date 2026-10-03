@@ -233,7 +233,10 @@ against a real, ephemeral stack:
   between steps. `tests/hurl/facility.hurl` is a read-only smoke test (the facility
   routes have no write endpoints implemented yet). `tests/hurl/webhooks.hurl` covers
   create → read → delete → read (no update endpoint exists) plus the https-only URL
-  validation on create. `tests/hurl/testing_key.hurl` posts to news, events, and
+  validation on create. `tests/hurl/division.hurl` checks GET `/division/controllers`
+  against seeded cobalt `user` rows (one with a `user_visit`, plus ZZN and ZAE rows that
+  must be excluded) and two `acl_user_role` grants, also in `03_seed.sql`.
+  `tests/hurl/testing_key.hurl` posts to news, events, and
   webhooks with the testing-flagged key and asserts nothing was persisted.
 - `tests/hurl/events_pagination.hurl` covers GET `/events`'s `page`/`count` query
   params and visibility filtering: creates 4 events (3 owned by ZHQ, 1 by ZHU, all left

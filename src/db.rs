@@ -161,6 +161,21 @@ pub struct Webhook {
     pub deleted_at: Option<chrono::DateTime<Utc>>,
 }
 
+/// A role granted to a user, Cobalt DB.
+///
+/// `facility` is either a facility code or `*` for a division-wide grant.
+///
+/// **Table**: `acl_user_role`
+#[derive(Debug, Serialize, ToSchema)]
+pub struct UserRole {
+    pub id: i64,
+    pub cid: i32,
+    pub facility: String,
+    pub role: String,
+    pub grantor_cid: i32,
+    pub granted_at: i64,
+}
+
 /// News posts, Cobalt DB.
 ///
 /// **Table**: `news_post`

@@ -6,7 +6,7 @@
 #![allow(unused)]
 
 use crate::{
-    db::{ApiKey, ChangeLogEntry, Event, NewsPost, Role, Webhook},
+    db::{ApiKey, ChangeLogEntry, Event, NewsPost, Role, UserRole, Webhook},
     shared::{AppError, HasFacility},
 };
 use axum::response::AppendHeaders;
@@ -575,6 +575,64 @@ pub async fn delete_processed_changes(
     .execute(db)
     .await?;
     Ok(result.rows_affected())
+}
+
+// ---------------------------------------------------
+// user / acl_user_role
+// ---------------------------------------------------
+
+/// A controller from Cobalt's `user` table.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct DivisionController {
+    pub cid: i64,
+    pub display_name: String,
+    pub controller_rating: i32,
+    pub instructor_rating: i32,
+    pub facility: String,
+    pub visiting_facilities: Vec<String>,
+    pub last_promotion_time: Option<chrono::DateTime<Utc>>,
+    pub last_transfer_time: Option<chrono::DateTime<Utc>>,
+    pub last_competency_date: Option<chrono::DateTime<Utc>>,
+}
+
+/// Get every controller in Cobalt's `user` table, excluding non-members (ZZN)
+/// and the Academy (ZAE).
+pub async fn get_division_controllers(db: &MySqlPool) -> Result<Vec<DivisionController>, AppError> {
+    let rows = sqlx::query!(
+        r#"SELECT u.cid AS "cid!", u.display_name AS "display_name!",
+        u.controller_rating AS "controller_rating!", u.instructor_rating AS "instructor_rating!",
+        u.facility AS "facility!",
+        (SELECT GROUP_CONCAT(uv.facility SEPARATOR ',') FROM user_visit uv WHERE uv.cid = u.cid) AS visiting_facilities,
+        u.last_promotion_time, u.last_transfer_time, u.last_competency_date
+        FROM user u WHERE u.facility NOT IN ('ZZN', 'ZAE') ORDER BY u.cid"#
+    )
+    .fetch_all(db)
+    .await?;
+    let controllers = rows
+        .into_iter()
+        .map(|row| DivisionController {
+            cid: row.cid,
+            display_name: row.display_name,
+            controller_rating: row.controller_rating,
+            instructor_rating: row.instructor_rating,
+            facility: row.facility,
+            visiting_facilities: row
+                .visiting_facilities
+                .map_or_else(Vec::new, |v| v.split(',').map(String::from).collect()),
+            last_promotion_time: row.last_promotion_time,
+            last_transfer_time: row.last_transfer_time,
+            last_competency_date: row.last_competency_date,
+        })
+        .collect();
+    Ok(controllers)
+}
+
+/// Get every role grant in Cobalt's `acl_user_role` table.
+pub async fn get_user_roles(db: &MySqlPool) -> Result<Vec<UserRole>, AppError> {
+    let roles = sqlx::query_as!(UserRole, "SELECT * FROM acl_user_role ORDER BY id")
+        .fetch_all(db)
+        .await?;
+    Ok(roles)
 }
 
 // ---------------------------------------------------
