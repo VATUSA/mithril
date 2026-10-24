@@ -55,7 +55,7 @@ RUN cargo build --release --target "$(cat /rust_target)" \
     && cp target/"$(cat /rust_target)"/release/mithril /app/mithril
 
 # ---- Runtime stage ----
-FROM debian:trixie-slim@sha256:020c0d20b9880058cbe785a9db107156c3c75c2ac944a6aa7ab59f2add76a7bd AS app
+FROM debian:trixie-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad AS app
 WORKDIR /app
 EXPOSE 4000
 
